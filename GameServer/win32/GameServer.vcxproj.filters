@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{8c2a6b48-30cd-405a-a619-4271e47182ee}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\gameLogic">
+      <UniqueIdentifier>{9d8c9115-cff7-475c-b1ac-ff15d9501408}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\database">
+      <UniqueIdentifier>{ed909891-866d-4c82-8b77-38378458af5c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\Client.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Message.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\Server.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\SQLRequest.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gameLogic\ActivationCode.cpp">
+      <Filter>src\gameLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gameLogic\UIControl.cpp">
+      <Filter>src\gameLogic</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\database\ActivationCodeQuery.cpp">
+      <Filter>src\database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\database\UIConfigQuery.cpp">
+      <Filter>src\database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\database\SDKConfigQuery.cpp">
+      <Filter>src\database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gameLogic\SDKControl.cpp">
+      <Filter>src\gameLogic</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\Client.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Message.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Server.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\SQLRequest.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gameLogic\ActivationCode.h">
+      <Filter>src\gameLogic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gameLogic\UIControl.h">
+      <Filter>src\gameLogic</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\database\ActivationCodeQuery.h">
+      <Filter>src\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\database\UIConfigQuery.h">
+      <Filter>src\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\database\SDKConfigQuery.h">
+      <Filter>src\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gameLogic\SDKControl.h">
+      <Filter>src\gameLogic</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

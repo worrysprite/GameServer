@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30110.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GameServer", "GameServer\win32\GameServer.vcxproj", "{E739ACE6-C97B-4E6D-952E-54D309A75282}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libServerCore", "libServerCore\win32\libServerCore.vcxproj", "{D4054E0B-9E83-41EF-AB48-A27CAB563070}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E739ACE6-C97B-4E6D-952E-54D309A75282}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E739ACE6-C97B-4E6D-952E-54D309A75282}.Debug|x64.ActiveCfg = Debug|x64
+		{E739ACE6-C97B-4E6D-952E-54D309A75282}.Debug|x64.Build.0 = Debug|x64
+		{E739ACE6-C97B-4E6D-952E-54D309A75282}.Release|Win32.ActiveCfg = Release|Win32
+		{E739ACE6-C97B-4E6D-952E-54D309A75282}.Release|x64.ActiveCfg = Release|x64
+		{E739ACE6-C97B-4E6D-952E-54D309A75282}.Release|x64.Build.0 = Release|x64
+		{D4054E0B-9E83-41EF-AB48-A27CAB563070}.Debug|Win32.ActiveCfg = Debug|Win32
+		{D4054E0B-9E83-41EF-AB48-A27CAB563070}.Debug|x64.ActiveCfg = Debug|x64
+		{D4054E0B-9E83-41EF-AB48-A27CAB563070}.Debug|x64.Build.0 = Debug|x64
+		{D4054E0B-9E83-41EF-AB48-A27CAB563070}.Release|Win32.ActiveCfg = Release|Win32
+		{D4054E0B-9E83-41EF-AB48-A27CAB563070}.Release|x64.ActiveCfg = Release|x64
+		{D4054E0B-9E83-41EF-AB48-A27CAB563070}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

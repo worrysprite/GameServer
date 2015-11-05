@@ -26,3 +26,7 @@
 *.exe
 *.out
 *.app
+
+# VisualStudio cache
+*.sdf
+Debug
