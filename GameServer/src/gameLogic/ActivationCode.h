@@ -4,25 +4,21 @@
 #include "Message.h"
 #include "Client.h"
 #include "database/ActivationCodeQuery.h"
+#include <map>
 
 class ActivationCode
 {
 public:
 	static ActivationCode* getInstance();
-	void processActivationCode(Client* client, ActivationMessage* msg);
+	void processActivationCode(long long clientID, ActivationMessage* msg);
 
 private:
 	ActivationCode();
 	static ActivationCode* _instance;
 
-	Client* client;
-	ActivationCodeQuery* queryRequest;
-	ActivationCodeQuery* updateRequest;
-	ActivationMessage replyMsg;
-
-	void onActivationInfoGet(void* data);
-	void onActivationUpdated(void* data);
-	void replyClient();
+	void onActivationInfoGet(long long clientID, ActivationMessage* data);
+	void onActivationUpdated(long long clientID, ActivationMessage* data);
+	void replyClient(ClientSocket* client, ActivationMessage* replyMsg);
 };
 
 

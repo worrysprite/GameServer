@@ -1,15 +1,15 @@
 #include "UIConfigQuery.h"
-#include "Message.h"
 
-void UIConfigQuery::queryUIConfig(unsigned char version, unsigned char platform)
+void UIConfigQuery::queryUIConfig(unsigned char version, unsigned char platform, CallbackType callback)
 {
 	this->version = version;
 	this->platform = platform;
+	this->callback = callback;
 }
 
 void UIConfigQuery::onRequest(Database& db)
 {
-	data = nullptr;
+	config = new UIConfigMessage;
 	char sql[] = "SELECT `ui`, `open` FROM `t_ui_config` WHERE `version`=%u AND `platform`=%u;";
 	char buffer[1024] = {0};
 	sprintf(buffer, sql, version, platform);
@@ -17,24 +17,33 @@ void UIConfigQuery::onRequest(Database& db)
 	size_t numRows = db.getResultRows();
 	if (numRows > 0)
 	{
-		UIConfigMessage* message = new UIConfigMessage;
-		message->numConfig = (unsigned short)numRows;
-		message->configList = new UIConfig[numRows];
+		config->numConfig = (unsigned short)numRows;
+		config->configList = new UIConfig[numRows];
 		for (int i(0); i < numRows; ++i)
 		{
 			if (record && record->MoveNext())
 			{
 				Recordset& row(*record);
-				row >> message->configList[i].ui;
-				row >> message->configList[i].open;
+				row >> config->configList[i].ui;
+				row >> config->configList[i].open;
 			}
 			else
 			{
 				break;
 			}
 		}
-		data = message;
 	}
 	db.cleanRecordset(record);
+}
+
+void UIConfigQuery::onFinish()
+{
+	if (callback)
+	{
+		callback(config);
+	}
+	delete config;
+	config = nullptr;
+	callback = nullptr;
 }
 

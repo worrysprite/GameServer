@@ -1,8 +1,8 @@
 #ifndef __CLIENT_H__
 #define __CLIENT_H__
 
-#include "ClientSocket.h"
 #include "Message.h"
+#include "ServerSocket.h"
 
 using namespace ws;
 

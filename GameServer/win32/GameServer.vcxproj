@@ -138,7 +138,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>$(SolutionDir)libServerCore\src;$(ProjectDir)mysql\include;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -245,8 +245,6 @@
     <ClCompile Include="..\src\gameLogic\UIControl.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Message.cpp" />
-    <ClCompile Include="..\src\Server.cpp" />
-    <ClCompile Include="..\src\SQLRequest.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Client.h" />
@@ -257,8 +255,6 @@
     <ClInclude Include="..\src\gameLogic\SDKControl.h" />
     <ClInclude Include="..\src\gameLogic\UIControl.h" />
     <ClInclude Include="..\src\Message.h" />
-    <ClInclude Include="..\src\Server.h" />
-    <ClInclude Include="..\src\SQLRequest.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

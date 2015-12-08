@@ -1,7 +1,8 @@
 #ifndef __ACTIVATION_CODE_QUERY_H__
 #define __ACTIVATION_CODE_QUERY_H__
 
-#include "SQLRequest.h"
+#include "Database.h"
+#include "Message.h"
 
 enum ActivationStatus
 {
@@ -10,16 +11,24 @@ enum ActivationStatus
 	INVALID_CODE
 };
 
-class ActivationCodeQuery : public SQLRequest
+class ActivationCodeQuery : public ws::DBRequest
 {
 public:
-	void queryActivationCode(const std::string& code);
-	void updateActivationStatus(const std::string& code, unsigned char status);
+	typedef std::function<void(ActivationMessage*)> CallbackType;
+
+	void queryActivationCode(const std::string& code, CallbackType callback);
+	void updateActivationStatus(const ActivationMessage& code, unsigned char status, CallbackType callback);
 	virtual void onRequest(Database& db);
+	virtual void onFinish();
 
 private:
 	std::string code;
 	unsigned char status;
+	ActivationMessage* activation;
+
+	CallbackType queryCallback;
+	CallbackType updateCallback;
+
 	enum Type
 	{
 		QUERY_ACTIVATION_CODE,

@@ -9,16 +9,13 @@ class UIControl
 {
 public:
 	static UIControl* getInstance();
-	void processUIConfig(Client* client, UIConfigMessage* msg);
+	void processUIConfig(long long clientID, UIConfigMessage* msg);
 
 private:
 	UIControl();
 	static UIControl* _instance;
 
-	Client* client;
-	UIConfigQuery* queryRequest;
-
-	void onUIConfigGet(void* data);
+	void onUIConfigGet(long long clientID, UIConfigMessage* data);
 };
 
 #endif

@@ -1,7 +1,12 @@
 #include "SDKControl.h"
+#include "ServerSocket.h"
 #include <assert.h>
+#include "Log.h"
 
-SDKControl::SDKControl() : client(nullptr), queryRequest(nullptr)
+extern ServerSocket* gServer;
+extern DBQueue* gDBQueue;
+
+SDKControl::SDKControl()
 {
 
 }
@@ -17,27 +22,25 @@ SDKControl* SDKControl::getInstance()
 	return _instance;
 }
 
-void SDKControl::processSDKConfig(Client* client, SDKConfigMessage* msg)
+void SDKControl::processSDKConfig(long long clientID, SDKConfigMessage* msg)
 {
 	assert(msg != NULL);
-	this->client = client;
-	if (!queryRequest)
-	{
-		queryRequest = new SDKConfigQuery;
-		queryRequest->callback = std::bind(&SDKControl::onSDKConfigGet, this, std::placeholders::_1);
-	}
-	queryRequest->querySDKConfig(msg->version, msg->platform);
-	client->manager->addDBRequest(queryRequest);
+	SDKConfigQuery* queryRequest(new SDKConfigQuery);
+	queryRequest->querySDKConfig(msg->version, msg->platform, std::bind(&SDKControl::onSDKConfigGet, this, clientID, std::placeholders::_1));
+	gDBQueue->addQueueMsg(std::shared_ptr<SDKConfigQuery>(queryRequest));
 }
 
-void SDKControl::onSDKConfigGet(void* data)
+void SDKControl::onSDKConfigGet(long long clientID, SDKConfigMessage* data)
 {
-	SDKConfigMessage* replyData = nullptr;
-	if (data)
+	auto client(gServer->getClient(clientID));
+	if (!client)
 	{
-		replyData = (SDKConfigMessage*)data;
+		Log::w("client is disconnect before sql execute");
+		return;
 	}
-	else
+
+	SDKConfigMessage* replyData = data;
+	if (!data)
 	{
 		replyData = new SDKConfigMessage;
 	}

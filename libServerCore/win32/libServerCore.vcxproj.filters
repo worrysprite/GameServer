@@ -9,9 +9,6 @@
     <ClCompile Include="..\src\ByteArray.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ClientManager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Database.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -24,12 +21,12 @@
     <ClCompile Include="..\src\Timer.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\Actor.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\ByteArray.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ClientManager.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Database.h">
@@ -42,6 +39,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Timer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Actor.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ObjectPool.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

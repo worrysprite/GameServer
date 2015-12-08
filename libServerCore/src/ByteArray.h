@@ -1,5 +1,5 @@
-#ifndef __BYTEARRAY_H__
-#define __BYTEARRAY_H__
+#ifndef __WS_BYTEARRAY_H__
+#define __WS_BYTEARRAY_H__
 
 #include <string>
 #include <mutex>

@@ -1,7 +1,11 @@
 #include <assert.h>
 #include "UIControl.h"
+#include "Log.h"
 
-UIControl::UIControl() : client(nullptr), queryRequest(nullptr)
+extern ServerSocket* gServer;
+extern DBQueue* gDBQueue;
+
+UIControl::UIControl()
 {
 
 }
@@ -17,35 +21,28 @@ UIControl* UIControl::getInstance()
 	return _instance;
 }
 
-void UIControl::processUIConfig(Client* client, UIConfigMessage* msg)
+void UIControl::processUIConfig(long long clientID, UIConfigMessage* msg)
 {
 	assert(msg != NULL);
-	this->client = client;
-	if (!queryRequest)
-	{
-		queryRequest = new UIConfigQuery;
-		queryRequest->callback = std::bind(&UIControl::onUIConfigGet, this, std::placeholders::_1);
-	}
-	queryRequest->queryUIConfig(msg->version, msg->platform);
-	client->manager->addDBRequest(queryRequest);
+	UIConfigQuery* queryRequest = new UIConfigQuery;
+	queryRequest->queryUIConfig(msg->version, msg->platform, std::bind(&UIControl::onUIConfigGet, this, clientID, std::placeholders::_1));
+	gDBQueue->addQueueMsg(std::shared_ptr<UIConfigQuery>(queryRequest));
 }
 
-void UIControl::onUIConfigGet(void* data)
+void UIControl::onUIConfigGet(long long clientID, UIConfigMessage* data)
 {
-	UIConfigMessage* replyData = nullptr;
-	if (data)
+	ClientSocket* client = gServer->getClient(clientID);
+	if (!client)
 	{
-		replyData = (UIConfigMessage*)data;
+		Log::w("client is disconnect before sql execute");
+		return;
 	}
-	else
-	{
-		replyData = new UIConfigMessage;
-	}
+
 	ByteArray packet;
 	MessageHead head;
 	head.command = CMD_S2C_UI_CONFIG;
 	head.pack(packet);
-	replyData->pack(packet);
+	data->pack(packet);
 
 	// rewrite packet size
 	head.packSize = (unsigned short)packet.getSize();
@@ -55,10 +52,6 @@ void UIControl::onUIConfigGet(void* data)
 	client->send(packet);
 	client->flush();
 	client = nullptr;
-	if (!data)
-	{
-		delete replyData;
-	}
 }
 
 

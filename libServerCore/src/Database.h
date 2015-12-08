@@ -7,6 +7,7 @@
 #include <mutex>
 #include <vector>
 #include <thread>
+#include <memory>
 
 namespace ws
 {
@@ -79,23 +80,26 @@ namespace ws
 		virtual void onFinish() = 0;
 	};
 
-	class DBRequestQueue
+	class DBQueue
 	{
 	public:
-		DBRequestQueue();
-		virtual ~DBRequestQueue();
+		typedef std::shared_ptr<DBRequest> PtrDBRequest;
+
+		DBQueue();
+		virtual ~DBQueue();
 
 		void init(int nThread, const MYSQL_CONFIG& config);
 
-		void addQueueMsg(DBRequest* request);
-		int update();
+		void addQueueMsg(PtrDBRequest request);
+		void update();
 
 	private:
-		DBRequest* getRequest();
-		void finishRequest(DBRequest* request);
-		int DBWorkThread(const MYSQL_CONFIG& dbParam);
+		MYSQL_CONFIG config;
+		PtrDBRequest getRequest();
+		void finishRequest(PtrDBRequest request);
+		void DBWorkThread();
 
-		typedef std::list<DBRequest*> DBRequestList;
+		typedef std::list<PtrDBRequest> DBRequestList;
 		std::mutex m_WorkMutex;
 		DBRequestList m_WorkQueue;
 		std::mutex m_FinishMutex;

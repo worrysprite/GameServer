@@ -35,18 +35,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\Actor.cpp" />
     <ClCompile Include="..\src\ByteArray.cpp" />
-    <ClCompile Include="..\src\ClientManager.cpp" />
     <ClCompile Include="..\src\Database.cpp" />
     <ClCompile Include="..\src\Log.cpp" />
     <ClCompile Include="..\src\ServerSocket.cpp" />
     <ClCompile Include="..\src\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Actor.h" />
     <ClInclude Include="..\src\ByteArray.h" />
-    <ClInclude Include="..\src\ClientManager.h" />
     <ClInclude Include="..\src\Database.h" />
     <ClInclude Include="..\src\Log.h" />
+    <ClInclude Include="..\src\ObjectPool.h" />
     <ClInclude Include="..\src\ServerSocket.h" />
     <ClInclude Include="..\src\Timer.h" />
   </ItemGroup>

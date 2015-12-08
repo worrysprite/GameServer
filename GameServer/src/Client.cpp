@@ -1,7 +1,10 @@
 #include "Client.h"
+#include "Log.h"
 #include "gameLogic/ActivationCode.h"
 #include "gameLogic/UIControl.h"
 #include "gameLogic/SDKControl.h"
+
+extern ServerSocket* gServer;
 
 Client::Client() : pHead(nullptr)
 {
@@ -34,9 +37,11 @@ void Client::onRecv()
 				return;
 			}
 		}
-		if (pHead->packSize > MESSAGE_MAX_SIZE)
+		if (pHead->packSize > MESSAGE_MAX_SIZE ||
+			pHead->command < CMD_C2S_VERSION  ||
+			pHead->command >= CMD_C2S_MAX)
 		{
-			manager->closeClient(this);
+			isClosing = true;
 			return;
 		}
 		if (readBuffer->available() < pHead->packSize - headSize)	//不够消息体大小
@@ -44,6 +49,7 @@ void Client::onRecv()
 			return;
 		}
 		Message* msg = NULL;
+		Log::v("recv command: %d", pHead->command);
 		switch (pHead->command)
 		{
 		case CMD_C2S_VERSION:
@@ -52,19 +58,19 @@ void Client::onRecv()
 		case CMD_C2S_ACTIVE_CODE:
 			msg = new ActivationMessage;
 			msg->unpack(*readBuffer);
-			ActivationCode::getInstance()->processActivationCode(this, (ActivationMessage*)msg);
+			ActivationCode::getInstance()->processActivationCode(id, (ActivationMessage*)msg);
 			break;
 
 		case CMD_C2S_UI_CONFIG:
 			msg = new UIConfigMessage;
 			msg->unpack(*readBuffer);
-			UIControl::getInstance()->processUIConfig(this, (UIConfigMessage*)msg);
+			UIControl::getInstance()->processUIConfig(id, (UIConfigMessage*)msg);
 			break;
 
 		case CMD_C2S_SDK_CONFIG:
 			msg = new SDKConfigMessage;
 			msg->unpack(*readBuffer);
-			SDKControl::getInstance()->processSDKConfig(this, (SDKConfigMessage*)msg);
+			SDKControl::getInstance()->processSDKConfig(id, (SDKConfigMessage*)msg);
 			break;
 		}	// end switch
 		delete msg;

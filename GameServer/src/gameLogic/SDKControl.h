@@ -9,16 +9,13 @@ class SDKControl
 {
 public:
 	static SDKControl* getInstance();
-	void processSDKConfig(Client* client, SDKConfigMessage* msg);
+	void processSDKConfig(long long clientID, SDKConfigMessage* msg);
 
 private:
 	SDKControl();
 	static SDKControl* _instance;
 
-	Client* client;
-	SDKConfigQuery* queryRequest;
-
-	void onSDKConfigGet(void* data);
+	void onSDKConfigGet(long long clientID, SDKConfigMessage* data);
 };
 
 #endif

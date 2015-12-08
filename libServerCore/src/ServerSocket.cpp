@@ -1,14 +1,57 @@
 #include "ServerSocket.h"
 #include "Log.h"
 #include <errno.h>
+#include <string.h>
 
 namespace ws
 {
-#ifdef WIN32
-	// main thread
-	ServerSocket::ServerSocket(ClientManager* manager) : completionPort(nullptr), clientManager(manager), lpfnAcceptEx(nullptr)
+	//===================== ClientSocket Implements ========================
+	// socket threads
+	ClientSocket::ClientSocket() : server(nullptr), socket(0), readBuffer(nullptr), isClosing(false), writeBuffer(nullptr), isUpdate(false), id(0)
 	{
-		
+		readBuffer = new ByteArray(BUFFER_SIZE);
+		writeBuffer = new ByteArray(BUFFER_SIZE);
+	}
+
+	// socket threads
+	ClientSocket::~ClientSocket()
+	{
+		delete readBuffer;
+		delete writeBuffer;
+	}
+
+	// main thread
+	void ClientSocket::send(const char* data, size_t length)
+	{
+		writeBuffer->lock();
+		writeBuffer->position = writeBuffer->getSize();
+		writeBuffer->writeObject(data, length);
+		writeBuffer->unlock();
+	}
+
+	// main thread
+	void ClientSocket::send(const ByteArray& packet)
+	{
+		writeBuffer->lock();
+		writeBuffer->position = writeBuffer->getSize();
+		writeBuffer->writeBytes(packet);
+		writeBuffer->unlock();
+	}
+
+	// main thread
+	void ClientSocket::flush()
+	{
+		server->flushClient(this);
+	}
+
+
+#ifdef WIN32 //-----------------------windows implements start-------------------------------
+	// main thread
+	ServerSocket::ServerSocket(ServerConfig& cfg) :
+				config(cfg), completionPort(nullptr), lpfnAcceptEx(nullptr), nextClientID(0), listenSocket(0)
+	{
+		assert(cfg.createClient != nullptr);
+		assert(cfg.destroyClient != nullptr);
 	}
 
 	// main thread
@@ -44,30 +87,14 @@ namespace ws
 			}
 			delete ioData;
 		}
+
 		shutdown(listenSocket, SD_BOTH);
 		closesocket(listenSocket);
 		WSACleanup();
 	}
-#elif LINUX
-	ServerSocket::ServerSocket(ClientManager* manager) : clientManager(manager), isExit(false)
-	{
-		
-	}
-
-	ServerSocket::~ServerSocket()
-	{
-		// stop event threads
-		isExit = true;
-		eventThread->join();
-		Log::d("server socket event thread joined");
-		delete eventThread;
-		eventThread = NULL;
-	}
-#endif
 
 	int ServerSocket::processEventThread()
 	{
-#ifdef WIN32
 		DWORD BytesTransferred;
 		LPOVERLAPPED lpOverlapped;
 		ClientSocket* client = NULL;
@@ -79,13 +106,20 @@ namespace ws
 		while (true)
 		{
 			bRet = GetQueuedCompletionStatus(completionPort, &BytesTransferred,
-				(PULONG_PTR)&client, (LPOVERLAPPED*)&lpOverlapped, INFINITE);
+							(PULONG_PTR)&client, (LPOVERLAPPED*)&lpOverlapped, INFINITE);
 			ioData = (OverlappedData*)CONTAINING_RECORD(lpOverlapped, OverlappedData, overlapped);
 			if (bRet == 0)
 			{
-				Log::e("GetQueuedCompletionStatus Error: %d", GetLastError());
-				clientManager->removeClient(client);
-				releaseOverlappedData(ioData);
+				DWORD error(GetLastError());
+				Log::e("GetQueuedCompletionStatus Error: %d", error);
+				if (lpOverlapped)
+				{
+					if (ERROR_CONNECTION_ABORTED != error)
+					{
+						client->isClosing = true;
+					}
+					releaseOverlappedData(ioData);
+				}
 				continue;
 			}
 			switch (ioData->operationType)
@@ -94,7 +128,7 @@ namespace ws
 			{
 				sockaddr_in localAddr;
 				getAcceptedSocketAddress(ioData->buffer, &localAddr);
-				client = clientManager->addClient(ioData->acceptSocket, localAddr);
+				client = addClient(ioData->acceptSocket, localAddr);
 				CreateIoCompletionPort((HANDLE)client->socket, completionPort, (ULONG_PTR)client, 0);
 
 				initOverlappedData(*ioData, SocketOperation::RECEIVE);
@@ -107,17 +141,18 @@ namespace ws
 			{
 				if (BytesTransferred == 0)
 				{
-					clientManager->removeClient(client);
+					client->isClosing = true;
 					releaseOverlappedData(ioData);
 				}
 				else
 				{
 					if (client->isClosing)	// ignore if closing
 					{
+						releaseOverlappedData(ioData);
 						continue;
 					}
 					writeClientBuffer(client, ioData->buffer, BytesTransferred);
-					clientManager->flagUpdate(client);
+					client->isUpdate = true;
 					initOverlappedData(*ioData, SocketOperation::RECEIVE);
 					WSARecv(client->socket, &(ioData->wsabuff), 1, &numBytes, &Flags, &(ioData->overlapped), NULL);
 				}
@@ -128,7 +163,7 @@ namespace ws
 			{
 				if (BytesTransferred == 0)
 				{
-					clientManager->removeClient(client);
+					client->isClosing = true;
 					releaseOverlappedData(ioData);
 					Log::e("send error! %d", WSAGetLastError());
 				}
@@ -136,12 +171,6 @@ namespace ws
 				{
 					releaseOverlappedData(ioData);
 				}
-				break;
-			}
-			case SocketOperation::CLOSE_CLIENT:
-			{
-				clientManager->removeClient(client);
-				releaseOverlappedData(ioData);
 				break;
 			}
 
@@ -152,60 +181,11 @@ namespace ws
 			}
 			}
 		}
-#elif LINUX
-		epoll_event ev;
-		ev.events = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;
-		epoll_event events[EPOLL_SIZE];
-		sockaddr clientAddr;
-		socklen_t addrlen = sizeof(sockaddr);
-		while(true)
-		{
-			int eventCount = epoll_wait(epfd, events, EPOLL_SIZE, -1);
-			for (int i = 0; i < eventCount; ++i)
-			{
-				epoll_event& evt(events[i]);
-				if (evt.events & EPOLLERR || evt.events & EPOLLHUP)
-				{
-					// handle errors
-				}
-				if (evt.events & EPOLLIN)
-				{
-					if (evt.data.fd == listenSocket)
-					{
-						Socket acceptedSocket = accept(listenSocket, &clientAddr, &addrlen);
-						if (acceptedSocket < 0)
-						{
-							continue;
-						}
-						setNonblocking(acceptedSocket);
-						ev.data.ptr = clientManager->addClient(acceptedSocket, (sockaddr_in&)clientAddr);
-						epoll_ctl(epfd, EPOLL_CTL_ADD, acceptedSocket, &ev);
-					}
-					else
-					{
-						ClientSocket* client = (ClientSocket*)evt.data.ptr;
-						readIntoBuffer(client);
-					}
-				}
-				if (evt.events & EPOLLOUT)
-				{
-					ClientSocket* client = (ClientSocket*)evt.data.ptr;
-					writeFromBuffer(client);
-				}
-				if (evt.events & EPOLLRDHUP)
-				{
-					ClientSocket* client = (ClientSocket*)evt.data.ptr;
-					clientManager->removeClient(client);
-				}
-			}
-		}
-#endif
 		return 0;
 	}	//end of processEvent
 
-	int ServerSocket::startListen(unsigned short port)
+	int ServerSocket::startListen()
 	{
-#ifdef WIN32
 		WORD wVersionRequested = MAKEWORD(2, 2); // request WinSock lib v2.2
 		WSADATA wsaData;	// Windows Socket info struct
 		DWORD err = WSAStartup(wVersionRequested, &wsaData);
@@ -251,7 +231,7 @@ namespace ws
 		SOCKADDR_IN srvAddr;
 		srvAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 		srvAddr.sin_family = AF_INET;
-		srvAddr.sin_port = htons(port);
+		srvAddr.sin_port = htons(config.listenPort);
 		int result = bind(listenSocket, (SOCKADDR*)&srvAddr, sizeof(SOCKADDR));
 		if (SOCKET_ERROR == result)
 		{
@@ -260,14 +240,13 @@ namespace ws
 		}
 
 		// start listen
-		result = listen(listenSocket, 100);
+		result = listen(listenSocket, NUM_ACCEPTEX);
 		if (SOCKET_ERROR == result)
 		{
 			Log::e("Listen failed. Error: %d", GetLastError());
 			return -1;
 		}
-		listeningPort = port;
-		Log::i("server is listening port %d, waiting for clients...", port);
+		Log::i("server is listening port %d, waiting for clients...", config.listenPort);
 
 		//AcceptEx function pointer
 		lpfnAcceptEx = NULL;
@@ -276,8 +255,8 @@ namespace ws
 		//get acceptex function pointer
 		DWORD dwBytes = 0;
 		result = WSAIoctl(listenSocket, SIO_GET_EXTENSION_FUNCTION_POINTER,
-							&guidAcceptEx, sizeof(guidAcceptEx), &lpfnAcceptEx, sizeof(lpfnAcceptEx),
-							&dwBytes, NULL, NULL);
+			&guidAcceptEx, sizeof(guidAcceptEx), &lpfnAcceptEx, sizeof(lpfnAcceptEx),
+			&dwBytes, NULL, NULL);
 		if (result != 0)
 		{
 			Log::e("WSAIoctl get AcceptEx function pointer failed... %d", WSAGetLastError());
@@ -289,57 +268,13 @@ namespace ws
 		{
 			postAcceptEx();
 		}
-#elif LINUX
-		listenSocket = socket(PF_INET, SOCK_STREAM, 0);
-		if (listenSocket < 0)
-		{
-			Log::e("create listen socket error.");
-			return -1;
-		}
-		setNonblocking(listenSocket);
-		
-		sockaddr_in srvAddr;
-		srvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-		srvAddr.sin_family = PF_INET;
-		srvAddr.sin_port = htons(port);
-		
-		int result = bind(listenSocket, (sockaddr*)&srvAddr, sizeof(srvAddr));
-		if (result < 0)
-		{
-			Log::e("bind port %d error. errno=%d", port, errno);
-			return -1;
-		}
-		result = listen(listenSocket, 100);
-		if (result < 0)
-		{
-			Log::e("listen port %d error.", port);
-			return -1;
-		}
-		listeningPort = port;
-		Log::i("server is listening port %d, waiting for clients...", port);
-
-		epfd = epoll_create(EPOLL_SIZE);
-		if (epfd < 0)
-		{
-			return -1;
-		}
-		epoll_event ev;
-		ev.events = EPOLLIN | EPOLLET;
-		ev.data.fd = listenSocket;
-		epoll_ctl(epfd, EPOLL_CTL_ADD, listenSocket, &ev);
-
-		// create threads to process epoll events
-		std::function<int()> eventProc(std::bind(&ServerSocket::processEventThread, this));
-		eventThread = new std::thread(eventProc);
-#endif
 		return 0;
 	}	//end of startListen
 
 	// main thread
-	void ServerSocket::sendToClient(ClientSocket* client)
+	void ServerSocket::flushClient(ClientSocket* client)
 	{
-#ifdef WIN32
-		if (client->isClosing)
+		if (!client || client->isClosing)
 		{
 			return;
 		}
@@ -362,60 +297,35 @@ namespace ws
 		}
 		client->writeBuffer->cutHead(client->writeBuffer->position);
 		client->writeBuffer->unlock();
-		
-#elif LINUX
-		writeFromBuffer(client);
-#endif
 	}
 
-	// socket thread
-	void ServerSocket::writeClientBuffer(ClientSocket* client, char* data, size_t size)
-	{
-		client->readBuffer->lock();
-		size_t oldPosition = client->readBuffer->position;
-		// write at the end
-		client->readBuffer->position = client->readBuffer->getSize();
-		client->readBuffer->writeObject(data, size);
-		client->readBuffer->position = oldPosition;
-		client->readBuffer->unlock();
-	}
-
-#ifdef WIN32
 	// main thread and socket threads
 	ServerSocket::OverlappedData* ServerSocket::createOverlappedData(SocketOperation operation, size_t size /*= BUFFER_SIZE*/, SOCKET client /*= NULL*/)
 	{
 		OverlappedData* ioData = NULL;
-		ioDataMutex.lock();
-		if (!ioDataPool.empty())
-		{
-			ioData = ioDataPool.back();
-			ioDataPool.pop_back();
-		}
-		else
-		{
-			ioData = new OverlappedData;
-			ioData->wsabuff.buf = ioData->buffer;
-		}
+		ioDataPool.lock();
+		ioData = ioDataPool.alloc();
+		ioData->wsabuff.buf = ioData->buffer;
 		initOverlappedData(*ioData, operation, size, client);
 		ioDataPosted.push_back(ioData);
-		ioDataMutex.unlock();
+		ioDataPool.unlock();
 		return ioData;
 	}
 
 	// socket threads
 	void ServerSocket::releaseOverlappedData(OverlappedData* data)
 	{
-		ioDataMutex.lock();
+		ioDataPool.lock();
 		ioDataPosted.remove(data);
-		ioDataPool.push_back(data);
-		ioDataMutex.unlock();
+		ioDataPool.free(data);
+		ioDataPool.unlock();
 	}
 
 	void ServerSocket::initOverlappedData(OverlappedData& data, SocketOperation operation, size_t size /*= BUFFER_SIZE*/, SOCKET client /*= NULL*/)
 	{
 		memset(&(data.overlapped), 0, sizeof(OVERLAPPED));
 		memset(data.buffer, 0, BUFFER_SIZE);
-		data.wsabuff.len = size;
+		data.wsabuff.len = (ULONG)size;
 		data.operationType = operation;
 		data.acceptSocket = client;
 	}
@@ -428,7 +338,7 @@ namespace ws
 
 		DWORD dwBytes = 0;
 		int result = lpfnAcceptEx(listenSocket, acceptSocket, ioData->buffer, 0,
-			ADDRESS_LENGTH, ADDRESS_LENGTH, &dwBytes, &(ioData->overlapped));
+									ADDRESS_LENGTH, ADDRESS_LENGTH, &dwBytes, &(ioData->overlapped));
 		if (result == FALSE && WSAGetLastError() != ERROR_IO_PENDING)
 		{
 			Log::e("lpfnAcceptEx error.. %d", WSAGetLastError());
@@ -472,14 +382,163 @@ namespace ws
 		PostQueuedCompletionStatus(completionPort, 0, listenSocket, &(ioData->overlapped));
 	}
 
-	// main thread
-	void ServerSocket::closeClient(ClientSocket* client)
+	// socket thread
+	void ServerSocket::writeClientBuffer(ClientSocket* client, char* data, size_t size)
 	{
-		OverlappedData* ioData = createOverlappedData(CLOSE_CLIENT);
-		PostQueuedCompletionStatus(completionPort, 0, (ULONG_PTR)client, &(ioData->overlapped));
+		client->readBuffer->lock();
+		size_t oldPosition = client->readBuffer->position;
+		// write at the end
+		client->readBuffer->position = client->readBuffer->getSize();
+		client->readBuffer->writeObject(data, size);
+		client->readBuffer->position = oldPosition;
+		client->readBuffer->unlock();
 	}
 
-#elif LINUX
+	// main thread
+	void ServerSocket::destroyClient(ClientSocket* client)
+	{
+		shutdown(client->socket, SD_BOTH);
+		closesocket(client->socket);
+		config.destroyClient(client);
+	}
+
+#elif LINUX	//-----------------------linux implements start-------------------------------
+	// main thread
+	ServerSocket::ServerSocket(ServerConfig& cfg) :
+			config(cfg), isExit(false), eventThread(nullptr), epfd(0), nextClientID(0), listenSocket(0)
+	{
+		assert(cfg.createClient != nullptr);
+		assert(cfg.destroyClient != nullptr);
+	}
+
+	ServerSocket::~ServerSocket()
+	{
+		// stop event threads
+		isExit = true;
+		eventThread->join();
+		Log::d("server socket event thread joined");
+		delete eventThread;
+		eventThread = NULL;
+	}
+
+	int ServerSocket::processEventThread()
+	{
+		epoll_event ev;
+		ev.events = EPOLLIN | EPOLLOUT | EPOLLET | EPOLLRDHUP;
+		epoll_event events[EPOLL_SIZE];
+		sockaddr clientAddr;
+		socklen_t addrlen = sizeof(sockaddr);
+		while (true)
+		{
+			int eventCount = epoll_wait(epfd, events, EPOLL_SIZE, -1);
+			if (eventCount == -1)
+			{
+				if (errno == EINTR)
+				{
+					continue;
+				}
+				Log::e("epoll wait error=%s", strerror(errno));
+				return -1;
+			}
+			for (int i = 0; i < eventCount; ++i)
+			{
+				epoll_event& evt(events[i]);
+				if (evt.events & EPOLLERR || evt.events & EPOLLHUP)
+				{
+					// handle errors
+				}
+				if (evt.events & EPOLLIN)
+				{
+					if (evt.data.fd == listenSocket)
+					{
+						while (true)
+						{
+							Socket acceptedSocket = accept4(listenSocket, &clientAddr, &addrlen, SOCK_NONBLOCK);
+							if (acceptedSocket == -1)
+							{
+								if (errno != EAGAIN && errno != EWOULDBLOCK)
+								{
+									Log::e("accept error: %s", strerror(errno));
+								}
+								break;
+							}
+							//setNonblocking(acceptedSocket);
+							ev.data.ptr = addClient(acceptedSocket, (sockaddr_in&)clientAddr);
+							epoll_ctl(epfd, EPOLL_CTL_ADD, acceptedSocket, &ev);
+						}
+					}
+					else
+					{
+						ClientSocket* client = (ClientSocket*)evt.data.ptr;
+						readIntoBuffer(client);
+					}
+				}
+				if (evt.events & EPOLLOUT)
+				{
+					ClientSocket* client = (ClientSocket*)evt.data.ptr;
+					writeFromBuffer(client);
+				}
+				if (evt.events & EPOLLRDHUP)
+				{
+					ClientSocket* client = (ClientSocket*)evt.data.ptr;
+					client->isClosing = true;
+				}
+			}
+		}
+		return 0;
+	}	//end of processEvent
+
+	int ServerSocket::startListen()
+	{
+		listenSocket = socket(PF_INET, SOCK_STREAM, 0);
+		if (listenSocket < 0)
+		{
+			Log::e("create listen socket error.");
+			return -1;
+		}
+		setNonblocking(listenSocket);
+
+		sockaddr_in srvAddr;
+		srvAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+		srvAddr.sin_family = PF_INET;
+		srvAddr.sin_port = htons(config.listenPort);
+
+		int result = bind(listenSocket, (sockaddr*)&srvAddr, sizeof(srvAddr));
+		if (result < 0)
+		{
+			Log::e("bind port %d error. errno=%d", config.listenPort, errno);
+			return -1;
+		}
+		result = listen(listenSocket, 100);
+		if (result < 0)
+		{
+			Log::e("listen port %d error.", config.listenPort);
+			return -1;
+		}
+		Log::i("server is listening port %d, waiting for clients...", config.listenPort);
+
+		epfd = epoll_create(EPOLL_SIZE);
+		if (epfd < 0)
+		{
+			return -1;
+		}
+		epoll_event ev;
+		ev.events = EPOLLIN | EPOLLET;
+		ev.data.fd = listenSocket;
+		epoll_ctl(epfd, EPOLL_CTL_ADD, listenSocket, &ev);
+
+		// create threads to process epoll events
+		std::function<int()> eventProc(std::bind(&ServerSocket::processEventThread, this));
+		eventThread = new std::thread(eventProc);
+		return 0;
+	}	//end of startListen
+
+	// main thread
+	void ServerSocket::flushClient(ClientSocket* client)
+	{
+		writeFromBuffer(client);
+	}
+
 	// socket thread
 	void ServerSocket::readIntoBuffer(ClientSocket* client)
 	{
@@ -490,9 +549,9 @@ namespace ws
 		char buffer[BUFFER_SIZE];
 		bzero(buffer, BUFFER_SIZE);
 		int length = recv(client->socket, buffer, BUFFER_SIZE, 0);
-		if (length <= 0)
+		if (length == 0 || (length == -1 && errno != EWOULDBLOCK && errno != EAGAIN))
 		{
-			clientManager->removeClient(client);
+			client->isClosing = true;
 			return;
 		}
 		while (length > 0)
@@ -503,8 +562,12 @@ namespace ws
 				break;
 			}
 			length = recv(client->socket, buffer, BUFFER_SIZE, 0);
+			if (length == 0 || (length == -1 && errno != EWOULDBLOCK && errno != EAGAIN))
+			{
+				client->isClosing = true;
+			}
 		}
-		clientManager->flagUpdate(client);
+		client->isUpdate = true;
 	}
 
 	// main thread and socket thread
@@ -523,6 +586,20 @@ namespace ws
 		{
 			size_t length = client->writeBuffer->readObject(buffer, BUFFER_SIZE);
 			long sentLength = send(client->socket, buffer, length, 0);
+			if (sentLength == -1)
+			{
+				if (sentLength == EWOULDBLOCK || sentLength == EAGAIN)
+				{
+					client->writeBuffer->position -= length;
+					break;
+				}
+				else
+				{
+					client->writeBuffer->unlock();
+					client->isClosing = true;
+					return;
+				}
+			}
 			if (sentLength < (long)length)	// tcp buffer full, stop write and wait epoll notify
 			{
 				client->writeBuffer->position -= length - sentLength;
@@ -538,5 +615,120 @@ namespace ws
 		client->writeBuffer->unlock();
 	}
 
+	// socket thread
+	void ServerSocket::writeClientBuffer(ClientSocket* client, char* data, size_t size)
+	{
+		client->readBuffer->lock();
+		size_t oldPosition = client->readBuffer->position;
+		// write at the end
+		client->readBuffer->position = client->readBuffer->getSize();
+		client->readBuffer->writeObject(data, size);
+		client->readBuffer->position = oldPosition;
+		client->readBuffer->unlock();
+	}
+
+	// main thread
+	void ServerSocket::destroyClient(ClientSocket* client)
+	{
+		if (-1 == shutdown(client->socket, SHUT_RDWR))
+		{
+			Log::e("shutdown socket error: %s", strerror(errno));
+		}
+		if (-1 == close(client->socket))
+		{
+			Log::e("close socket error: %s", strerror(errno));
+		}
+		config.destroyClient(client);
+	}
+
 #endif
+
+	// main thread
+	size_t ServerSocket::getCount()
+	{
+		return allClients.size();
+	}
+
+	// main thread
+	void ServerSocket::update()
+	{
+		addMtx.lock();
+		if (addingClients.size() > 0)
+		{
+			allClients.insert(addingClients.begin(), addingClients.end());
+			Log::d("%d client is connected. online=%d", addingClients.size(), allClients.size());
+			addingClients.clear();
+		}
+		addMtx.unlock();
+
+		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+		int numDisconnected(0);
+		for (auto iter = allClients.begin(); iter != allClients.end();)
+		{
+			auto client = iter->second;
+			if (client->isClosing)
+			{
+				++numDisconnected;
+				iter = allClients.erase(iter);
+				destroyClient(client);
+			}
+			else
+			{
+				if (client->isUpdate)
+				{
+					client->isUpdate = false;
+					client->lastActiveTime = now;
+					client->onRecv();
+				}
+				else if (now - client->lastActiveTime > config.kickTime)
+				{
+					client->isClosing = true;
+				}
+				++iter;
+			}
+		}
+		if (numDisconnected > 0)
+		{
+			Log::d("%d client is disconnected. online=%d", numDisconnected, allClients.size());
+		}
+	}
+
+	// socket threads
+	ClientSocket* ServerSocket::addClient(Socket client, const sockaddr_in &addr)
+	{
+		ClientSocket* cs = config.createClient();
+		cs->server = this;
+		cs->id = ++nextClientID;
+		cs->lastActiveTime = std::chrono::steady_clock::now();
+		cs->socket = client;
+		cs->addr = addr;
+
+		addMtx.lock();
+		addingClients.insert(std::make_pair(nextClientID, cs));
+		addMtx.unlock();
+		return cs;
+	}
+
+	// main thread
+	ClientSocket* ServerSocket::getClient(long long clientID)
+	{
+		ClientSocket* cs(nullptr);
+		auto iter = allClients.find(clientID);
+		if (iter != allClients.end())
+		{
+			cs = iter->second;
+		}
+		return cs;
+	}
+
+	// main thread
+	void ServerSocket::kickClient(long long clientID)
+	{
+		ClientSocket* client = getClient(clientID);
+		if (!client)
+		{
+			return;
+		}
+		client->isClosing = true;
+	}
 }

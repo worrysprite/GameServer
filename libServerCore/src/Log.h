@@ -20,6 +20,7 @@ namespace ws
 	{
 	public:
 		static LogLevel level;
+
 		static void v(const char* format, ...);
 		static void d(const char* format, ...);
 		static void i(const char* format, ...);

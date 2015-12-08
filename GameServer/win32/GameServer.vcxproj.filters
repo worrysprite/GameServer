@@ -21,12 +21,6 @@
     <ClCompile Include="..\src\Message.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Server.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\SQLRequest.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\gameLogic\ActivationCode.cpp">
       <Filter>src\gameLogic</Filter>
     </ClCompile>
@@ -51,12 +45,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Message.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Server.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\SQLRequest.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\gameLogic\ActivationCode.h">

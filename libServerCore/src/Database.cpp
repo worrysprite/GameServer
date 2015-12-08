@@ -229,12 +229,12 @@ namespace ws
 	}
 
 //===================== DBRequestQueue Implements ========================
-	DBRequestQueue::DBRequestQueue() : isExit(false)
+	DBQueue::DBQueue() : isExit(false)
 	{
 
 	}
 
-	DBRequestQueue::~DBRequestQueue()
+	DBQueue::~DBQueue()
 	{
 		isExit = true;
 		for (auto th : workerThreads)
@@ -245,16 +245,17 @@ namespace ws
 		}
 	}
 
-	void DBRequestQueue::init(int nThread, const MYSQL_CONFIG& config)
+	void DBQueue::init(int nThread, const MYSQL_CONFIG& config)
 	{
+		this->config = config;
 		for (int i = 0; i < nThread; i++)
 		{
-			std::thread* th(new std::thread(std::bind(&DBRequestQueue::DBWorkThread, this, config)));
+			std::thread* th(new std::thread(std::bind(&DBQueue::DBWorkThread, this)));
 			workerThreads.push_back(th);
 		}
 	}
 
-	void DBRequestQueue::addQueueMsg(DBRequest* request)
+	void DBQueue::addQueueMsg(PtrDBRequest request)
 	{
 		m_WorkMutex.lock();
 		m_WorkQueue.push_back(request);
@@ -262,7 +263,7 @@ namespace ws
 	}
 
 	// main thread
-	int DBRequestQueue::update()
+	void DBQueue::update()
 	{
 		DBRequestList finishQueue;
 		m_FinishMutex.lock();
@@ -271,16 +272,15 @@ namespace ws
 
 		while (!finishQueue.empty())
 		{
-			DBRequest* request = finishQueue.front();
+			PtrDBRequest request = finishQueue.front();
 			finishQueue.pop_front();
 			request->onFinish();
 		}
-		return 0;
 	}
 
-	DBRequest* DBRequestQueue::getRequest()
+	DBQueue::PtrDBRequest DBQueue::getRequest()
 	{
-		DBRequest* request = nullptr;
+		PtrDBRequest request(nullptr);
 		m_WorkMutex.lock();
 		if (!m_WorkQueue.empty())
 		{
@@ -291,17 +291,17 @@ namespace ws
 		return request;
 	}
 
-	void DBRequestQueue::finishRequest(DBRequest* request)
+	void DBQueue::finishRequest(PtrDBRequest request)
 	{
 		m_FinishMutex.lock();
 		m_FinishQueue.push_back(request);
 		m_FinishMutex.unlock();
 	}
 
-	int DBRequestQueue::DBWorkThread(const MYSQL_CONFIG& dbParam)
+	void DBQueue::DBWorkThread()
 	{
 		Database db;
-		db.setDBConfig(dbParam);
+		db.setDBConfig(config);
 		while (!this->isExit)
 		{
 			while (!db.isConnected())
@@ -310,8 +310,8 @@ namespace ws
 				std::this_thread::sleep_for(std::chrono::milliseconds(100));
 				continue;
 			}
-			DBRequest* request(getRequest());
-			if (request == NULL)
+			PtrDBRequest request(getRequest());
+			if (!request)
 			{
 				std::this_thread::sleep_for(std::chrono::milliseconds(10));
 				continue;
@@ -319,6 +319,5 @@ namespace ws
 			request->onRequest(db);
 			finishRequest(request);
 		}
-		return 0;
 	}
 }
