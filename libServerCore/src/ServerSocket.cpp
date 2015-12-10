@@ -47,7 +47,7 @@ namespace ws
 
 #ifdef WIN32 //-----------------------windows implements start-------------------------------
 	// main thread
-	ServerSocket::ServerSocket(ServerConfig& cfg) :
+	ServerSocket::ServerSocket(const ServerConfig& cfg) :
 				config(cfg), completionPort(nullptr), lpfnAcceptEx(nullptr), nextClientID(0), listenSocket(0)
 	{
 		assert(cfg.createClient != nullptr);
@@ -90,6 +90,7 @@ namespace ws
 
 		shutdown(listenSocket, SD_BOTH);
 		closesocket(listenSocket);
+		CloseHandle(completionPort);
 		WSACleanup();
 	}
 
@@ -126,13 +127,22 @@ namespace ws
 			{
 			case SocketOperation::ACCEPT:
 			{
-				sockaddr_in localAddr;
-				getAcceptedSocketAddress(ioData->buffer, &localAddr);
-				client = addClient(ioData->acceptSocket, localAddr);
-				CreateIoCompletionPort((HANDLE)client->socket, completionPort, (ULONG_PTR)client, 0);
+				if (numClients < config.maxConnection)
+				{
+					sockaddr_in localAddr;
+					getAcceptedSocketAddress(ioData->buffer, &localAddr);
+					client = addClient(ioData->acceptSocket, localAddr);
+					CreateIoCompletionPort((HANDLE)client->socket, completionPort, (ULONG_PTR)client, 0);
 
-				initOverlappedData(*ioData, SocketOperation::RECEIVE);
-				WSARecv(client->socket, &(ioData->wsabuff), 1, &numBytes, &Flags, &(ioData->overlapped), NULL);
+					initOverlappedData(*ioData, SocketOperation::RECEIVE);
+					WSARecv(client->socket, &(ioData->wsabuff), 1, &numBytes, &Flags, &(ioData->overlapped), NULL);
+				}
+				else
+				{
+					shutdown(ioData->acceptSocket, SD_BOTH);
+					closesocket(ioData->acceptSocket);
+					releaseOverlappedData(ioData);
+				}
 				postAcceptEx();
 				break;
 			}
@@ -184,8 +194,14 @@ namespace ws
 		return 0;
 	}	//end of processEvent
 
-	int ServerSocket::startListen()
+	bool ServerSocket::isInitWinsock = false;
+
+	int ServerSocket::initWinsock()
 	{
+		if (isInitWinsock)
+		{
+			return 0;
+		}
 		WORD wVersionRequested = MAKEWORD(2, 2); // request WinSock lib v2.2
 		WSADATA wsaData;	// Windows Socket info struct
 		DWORD err = WSAStartup(wVersionRequested, &wsaData);
@@ -201,7 +217,11 @@ namespace ws
 			Log::e("Request Windows Socket Version 2.2 Error!");
 			return -1;
 		}
+	}
 
+	int ServerSocket::startListen()
+	{
+		initWinsock();
 		// create an i/o completion port
 		completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 		if (NULL == completionPort)
@@ -216,7 +236,12 @@ namespace ws
 
 		// create threads to process i/o completion port events
 		std::function<int()> eventProc(std::bind(&ServerSocket::processEventThread, this));
-		for (DWORD i = 0; i < (mySysInfo.dwNumberOfProcessors * 2); ++i)
+		int numThreads = config.numIOCPThreads;
+		if (numThreads == 0)
+		{
+			numThreads = mySysInfo.dwNumberOfProcessors * 2;
+		}
+		for (DWORD i = 0; i < numThreads; ++i)
 		{
 			std::thread* th = new std::thread(eventProc);
 			eventThreads.push_back(th);
@@ -404,7 +429,7 @@ namespace ws
 
 #elif LINUX	//-----------------------linux implements start-------------------------------
 	// main thread
-	ServerSocket::ServerSocket(ServerConfig& cfg) :
+	ServerSocket::ServerSocket(const ServerConfig& cfg) :
 			config(cfg), isExit(false), eventThread(nullptr), epfd(0), nextClientID(0), listenSocket(0)
 	{
 		assert(cfg.createClient != nullptr);
@@ -462,9 +487,15 @@ namespace ws
 								}
 								break;
 							}
-							//setNonblocking(acceptedSocket);
-							ev.data.ptr = addClient(acceptedSocket, (sockaddr_in&)clientAddr);
-							epoll_ctl(epfd, EPOLL_CTL_ADD, acceptedSocket, &ev);
+							if (numClients < config.maxConnection)
+							{
+								ev.data.ptr = addClient(acceptedSocket, (sockaddr_in&)clientAddr);
+								epoll_ctl(epfd, EPOLL_CTL_ADD, acceptedSocket, &ev);
+							}
+							else
+							{
+								close(acceptedSocket);
+							}
 						}
 					}
 					else
@@ -643,10 +674,10 @@ namespace ws
 
 #endif
 
-	// main thread
+	// socket thread
 	size_t ServerSocket::getCount()
 	{
-		return allClients.size();
+		return numClients;
 	}
 
 	// main thread
@@ -691,6 +722,7 @@ namespace ws
 		{
 			Log::d("%d client is disconnected. online=%d", numDisconnected, allClients.size());
 		}
+		numClients = allClients.size();
 	}
 
 	// socket threads

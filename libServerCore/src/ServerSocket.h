@@ -72,6 +72,7 @@ namespace ws
 	{
 		unsigned short							listenPort;
 		unsigned int							maxConnection;
+		unsigned char							numIOCPThreads;
 		std::chrono::minutes					kickTime;
 		std::function<ClientSocket*()>			createClient;
 		std::function<void(ClientSocket*)>		destroyClient;
@@ -81,7 +82,7 @@ namespace ws
 	{
 		friend class ClientSocket;
 	public:
-		ServerSocket(ServerConfig& cfg);
+		ServerSocket(const ServerConfig& cfg);
 		virtual ~ServerSocket();
 
 		int					startListen();
@@ -93,6 +94,7 @@ namespace ws
 	private:
 		ServerConfig							config;
 		long long								nextClientID;
+		unsigned int							numClients;
 		Socket									listenSocket;
 		std::mutex								addMtx;
 		std::map<long long, ClientSocket*>		addingClients;
@@ -104,7 +106,6 @@ namespace ws
 		void				destroyClient(ClientSocket* client);
 		void				flushClient(ClientSocket* client);
 
-		
 #ifdef WIN32
 	private:
 		enum SocketOperation
@@ -130,7 +131,9 @@ namespace ws
 		ObjectPool<OverlappedData> ioDataPool;
 		std::list<OverlappedData*> ioDataPosted;
 		std::list<std::thread*> eventThreads;
+		static bool isInitWinsock;
 
+		int initWinsock();
 		int postAcceptEx();
 		int getAcceptedSocketAddress(char* buffer, sockaddr_in* addr);
 		void postCloseServer();
@@ -145,10 +148,6 @@ namespace ws
 		bool isExit;
 		std::thread* eventThread;
 
-		inline int setNonblocking(int socketfd)
-		{
-			fcntl(socketfd, F_SETFL, fcntl(socketfd, F_GETFL, 0) | O_NONBLOCK);
-		}
 		void readIntoBuffer(ClientSocket* client);
 		void writeFromBuffer(ClientSocket* client);
 #endif

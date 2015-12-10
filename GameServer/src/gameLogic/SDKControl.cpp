@@ -2,9 +2,7 @@
 #include "ServerSocket.h"
 #include <assert.h>
 #include "Log.h"
-
-extern ServerSocket* gServer;
-extern DBQueue* gDBQueue;
+#include "GameServer.h"
 
 SDKControl::SDKControl()
 {
@@ -27,12 +25,12 @@ void SDKControl::processSDKConfig(long long clientID, SDKConfigMessage* msg)
 	assert(msg != NULL);
 	SDKConfigQuery* queryRequest(new SDKConfigQuery);
 	queryRequest->querySDKConfig(msg->version, msg->platform, std::bind(&SDKControl::onSDKConfigGet, this, clientID, std::placeholders::_1));
-	gDBQueue->addQueueMsg(std::shared_ptr<SDKConfigQuery>(queryRequest));
+	GameServer::getInstance()->getDBQueue()->addQueueMsg(std::shared_ptr<SDKConfigQuery>(queryRequest));
 }
 
 void SDKControl::onSDKConfigGet(long long clientID, SDKConfigMessage* data)
 {
-	auto client(gServer->getClient(clientID));
+	auto client(GameServer::getInstance()->getLogicServer()->getClient(clientID));
 	if (!client)
 	{
 		Log::w("client is disconnect before sql execute");

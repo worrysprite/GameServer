@@ -1,9 +1,7 @@
 #include <assert.h>
 #include "UIControl.h"
 #include "Log.h"
-
-extern ServerSocket* gServer;
-extern DBQueue* gDBQueue;
+#include "GameServer.h"
 
 UIControl::UIControl()
 {
@@ -26,12 +24,12 @@ void UIControl::processUIConfig(long long clientID, UIConfigMessage* msg)
 	assert(msg != NULL);
 	UIConfigQuery* queryRequest = new UIConfigQuery;
 	queryRequest->queryUIConfig(msg->version, msg->platform, std::bind(&UIControl::onUIConfigGet, this, clientID, std::placeholders::_1));
-	gDBQueue->addQueueMsg(std::shared_ptr<UIConfigQuery>(queryRequest));
+	GameServer::getInstance()->getDBQueue()->addQueueMsg(std::shared_ptr<UIConfigQuery>(queryRequest));
 }
 
 void UIControl::onUIConfigGet(long long clientID, UIConfigMessage* data)
 {
-	ClientSocket* client = gServer->getClient(clientID);
+	ClientSocket* client = GameServer::getInstance()->getLogicServer()->getClient(clientID);
 	if (!client)
 	{
 		Log::w("client is disconnect before sql execute");

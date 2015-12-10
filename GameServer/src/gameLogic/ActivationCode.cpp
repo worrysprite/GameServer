@@ -1,9 +1,7 @@
 #include <assert.h>
 #include "ActivationCode.h"
 #include "Log.h"
-
-extern ServerSocket* gServer;
-extern DBQueue* gDBQueue;
+#include "GameServer.h"
 
 ActivationCode* ActivationCode::_instance = nullptr;
 
@@ -26,12 +24,12 @@ void ActivationCode::processActivationCode(long long clientID, ActivationMessage
 	assert(msg != NULL);
 	ActivationCodeQuery* queryRequest = new ActivationCodeQuery;
 	queryRequest->queryActivationCode(msg->code, std::bind(&ActivationCode::onActivationInfoGet, this, clientID, std::placeholders::_1));
-	gDBQueue->addQueueMsg(std::shared_ptr<ActivationCodeQuery>(queryRequest));
+	GameServer::getInstance()->getDBQueue()->addQueueMsg(std::shared_ptr<ActivationCodeQuery>(queryRequest));
 }
 
 void ActivationCode::onActivationInfoGet(long long clientID, ActivationMessage* data)
 {
-	auto client(gServer->getClient(clientID));
+	auto client(GameServer::getInstance()->getLogicServer()->getClient(clientID));
 	if (!client)
 	{
 		Log::w("client is disconnect before sql execute");
@@ -42,7 +40,7 @@ void ActivationCode::onActivationInfoGet(long long clientID, ActivationMessage* 
 		ActivationCodeQuery* updateRequest = new ActivationCodeQuery;
 		updateRequest->updateActivationStatus(*data, ActivationStatus::USED_CODE,
 							std::bind(&ActivationCode::onActivationUpdated, this, clientID, std::placeholders::_1));
-		gDBQueue->addQueueMsg(std::shared_ptr<ActivationCodeQuery>(updateRequest));
+		GameServer::getInstance()->getDBQueue()->addQueueMsg(std::shared_ptr<ActivationCodeQuery>(updateRequest));
 	}
 	else
 	{
@@ -68,7 +66,7 @@ void ActivationCode::replyClient(ClientSocket* client, ActivationMessage* replyM
 
 void ActivationCode::onActivationUpdated(long long clientID, ActivationMessage* data)
 {
-	auto client(gServer->getClient(clientID));
+	auto client(GameServer::getInstance()->getLogicServer()->getClient(clientID));
 	if (client)
 	{
 		replyClient(client, data);

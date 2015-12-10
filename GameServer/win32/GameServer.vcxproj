@@ -243,6 +243,7 @@
     <ClCompile Include="..\src\gameLogic\ActivationCode.cpp" />
     <ClCompile Include="..\src\gameLogic\SDKControl.cpp" />
     <ClCompile Include="..\src\gameLogic\UIControl.cpp" />
+    <ClCompile Include="..\src\GameServer.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Message.cpp" />
   </ItemGroup>
@@ -254,6 +255,7 @@
     <ClInclude Include="..\src\gameLogic\ActivationCode.h" />
     <ClInclude Include="..\src\gameLogic\SDKControl.h" />
     <ClInclude Include="..\src\gameLogic\UIControl.h" />
+    <ClInclude Include="..\src\GameServer.h" />
     <ClInclude Include="..\src\Message.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
