@@ -21,6 +21,4 @@ private:
 	void replyClient(ClientSocket* client, ActivationMessage* replyMsg);
 };
 
-
-
 #endif

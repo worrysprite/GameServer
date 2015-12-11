@@ -44,7 +44,7 @@ void ActivationMessage::pack(ByteArray& output)
 	output.lock();
 	output.writeUnsignedByte(status);
 	writeUTF8(output, code);
-	writeBlock(output, reward, plane4);
+	writeBlock(output, reward, plane4)
 	output.unlock();
 }
 
@@ -77,4 +77,29 @@ void SDKConfigMessage::pack(ByteArray& output)
 	output.lock();
 	output.writeUnsignedInt(opensdk);
 	output.unlock();
+}
+
+void ConsoleLoginMessage::unpack(ByteArray& input)
+{
+	input.lock();
+	readUTF8(input, username);
+	readUTF8(input, password);
+	input.unlock();
+}
+
+void ConsoleLoginMessage::pack(ByteArray& output)
+{
+	output.lock();
+	output.writeUnsignedInt(id);
+	output.unlock();
+}
+
+void ConsoleSubscribeMessage::unpack(ByteArray& input)
+{
+
+}
+
+void ConsoleSubscribeMessage::pack(ByteArray& output)
+{
+
 }

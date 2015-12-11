@@ -55,7 +55,6 @@ void SDKControl::onSDKConfigGet(long long clientID, SDKConfigMessage* data)
 
 	client->send(packet);
 	client->flush();
-	client = nullptr;
 	if (!data)
 	{
 		delete replyData;

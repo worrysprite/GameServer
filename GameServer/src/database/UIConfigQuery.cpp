@@ -13,7 +13,7 @@ void UIConfigQuery::onRequest(Database& db)
 	char sql[] = "SELECT `ui`, `open` FROM `t_ui_config` WHERE `version`=%u AND `platform`=%u;";
 	char buffer[1024] = {0};
 	sprintf(buffer, sql, version, platform);
-	Recordset* record = db.query(buffer);
+	std::shared_ptr<Recordset> record = db.query(buffer);
 	size_t numRows = db.getResultRows();
 	if (numRows > 0)
 	{
@@ -33,7 +33,6 @@ void UIConfigQuery::onRequest(Database& db)
 			}
 		}
 	}
-	db.cleanRecordset(record);
 }
 
 void UIConfigQuery::onFinish()

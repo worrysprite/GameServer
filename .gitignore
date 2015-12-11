@@ -29,4 +29,5 @@
 
 # VisualStudio cache
 *.sdf
+*.suo
 Debug

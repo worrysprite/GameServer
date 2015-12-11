@@ -237,7 +237,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Client.cpp" />
+    <ClCompile Include="..\src\ConsoleClient.cpp" />
+    <ClCompile Include="..\src\console\ConsoleLogin.cpp" />
     <ClCompile Include="..\src\database\ActivationCodeQuery.cpp" />
+    <ClCompile Include="..\src\database\ConsoleLoginQuery.cpp" />
     <ClCompile Include="..\src\database\SDKConfigQuery.cpp" />
     <ClCompile Include="..\src\database\UIConfigQuery.cpp" />
     <ClCompile Include="..\src\gameLogic\ActivationCode.cpp" />
@@ -249,7 +252,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Client.h" />
+    <ClInclude Include="..\src\ConsoleClient.h" />
+    <ClInclude Include="..\src\console\ConsoleLogin.h" />
     <ClInclude Include="..\src\database\ActivationCodeQuery.h" />
+    <ClInclude Include="..\src\database\ConsoleLoginQuery.h" />
     <ClInclude Include="..\src\database\SDKConfigQuery.h" />
     <ClInclude Include="..\src\database\UIConfigQuery.h" />
     <ClInclude Include="..\src\gameLogic\ActivationCode.h" />

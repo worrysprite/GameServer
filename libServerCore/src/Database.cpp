@@ -183,7 +183,7 @@ namespace ws
 		return (mysql_ping(mysql) == 0);
 	}
 
-	Recordset* Database::query(const char* strSQL, int nCommit /*= 1*/)
+	std::shared_ptr<Recordset> Database::query(const char* strSQL, int nCommit /*= 1*/)
 	{
 		Recordset* pRecordset = nullptr;
 		const char* pError = NULL;
@@ -214,18 +214,13 @@ namespace ws
 				Log::e("DBError: %s, SQL: %s", pError, strSQL);
 			}
 		}
-		return pRecordset;
+		return std::shared_ptr<Recordset>(pRecordset);
 	}
 
 	my_ulonglong Database::getInsertId()
 	{
 		if (mysql == NULL) return 0;
 		return mysql_insert_id(mysql);
-	}
-
-	void Database::cleanRecordset(Recordset* recordset)
-	{
-		delete recordset;
 	}
 
 //===================== DBRequestQueue Implements ========================

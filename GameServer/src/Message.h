@@ -24,7 +24,14 @@ enum ReplyCommand
 
 	CMD_S2C_MAX
 };
-#define MESSAGE_MAX_SIZE 4096
+
+enum ConsoleCommand
+{
+	CMD_CONSOLE_LOGIN = 1000,
+	CMD_CONSOLE_SUBSCRIBE,
+
+	CMD_CONSOLE_MAX
+};
 
 using namespace ws;
 
@@ -47,7 +54,21 @@ protected:
 	size_t size((intptr_t)(&(this->toField))-(intptr_t)ptr+sizeof(toField));\
 	output.writeObject(ptr, size);\
 }
+
+#define readBlock(input,fromField,toField) {\
+	void* ptr(&(this->fromField));\
+	size_t size((intptr_t)(&(this->toField))-(intptr_t)ptr+sizeof(toField));\
+	input.readObject(ptr, size);\
+}
+
+#define zeroInit(fromField,toField) {\
+	void* ptr(&(this->fromField));\
+	size_t size((intptr_t)(&(this->toField))-(intptr_t)ptr+sizeof(toField));\
+	memset(ptr, 0, size);\
+}
+
 #define HEAD_SIZE 4
+#define MESSAGE_MAX_SIZE 4096
 
 //消息头（空消息）
 typedef struct MessageHead : public Message
@@ -63,12 +84,12 @@ typedef struct MessageHead : public Message
 //激活码消息
 struct ActivationMessage : public Message
 {
-	ActivationMessage() : status(0), reward(0), coin(0), bomb(0), shield(0), plane2(0), plane3(0), plane4(0)
+	ActivationMessage()
 	{
-		
+		zeroInit(status, plane4)
 	}
-	unsigned char	status;
 	std::string		code;
+	unsigned char	status;
 	unsigned int	reward;
 	unsigned int	coin;
 	unsigned int	bomb;
@@ -93,9 +114,9 @@ struct UIConfig
 
 struct UIConfigMessage : public Message
 {
-	UIConfigMessage() : version(0), platform(0), numConfig(0), configList(nullptr)
+	UIConfigMessage()
 	{
-
+		zeroInit(version, configList)
 	}
 	unsigned char	version;
 	unsigned char	platform;
@@ -110,11 +131,34 @@ struct SDKConfigMessage : public Message
 {
 	SDKConfigMessage()
 	{
-
+		zeroInit(version, opensdk)
 	}
 	unsigned char	version;
 	unsigned char	platform;
 	unsigned int	opensdk;
+
+	virtual void unpack(ByteArray& input);
+	virtual void pack(ByteArray& output);
+};
+
+struct ConsoleLoginMessage : public Message
+{
+	ConsoleLoginMessage() : id(0)
+	{
+		
+	}
+
+	unsigned int	id;
+	std::string		username;
+	std::string		password;
+
+	virtual void unpack(ByteArray& input);
+	virtual void pack(ByteArray& output);
+};
+
+struct ConsoleSubscribeMessage : public Message
+{
+
 
 	virtual void unpack(ByteArray& input);
 	virtual void pack(ByteArray& output);

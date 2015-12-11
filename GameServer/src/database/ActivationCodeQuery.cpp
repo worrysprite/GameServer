@@ -1,5 +1,5 @@
 #include "ActivationCodeQuery.h"
-#include <stdio.h>
+#include "Log.h"
 
 void ActivationCodeQuery::onRequest(Database& db)
 {
@@ -12,7 +12,11 @@ void ActivationCodeQuery::onRequest(Database& db)
 		char sql[] = "SELECT a.`code`, a.`reward`, a.`status`, b.`coin`, b.`bomb`, b.`shield`, b.`plane2`, b.`plane3`, b.`plane4` FROM t_activation_code AS a INNER JOIN t_reward AS b ON a.`code`='%s' AND a.`reward`=b.`id`;";
 		char buffer[1024] = {0};
 		sprintf(buffer, sql, code.c_str());
-		Recordset* record = db.query(buffer);
+		std::shared_ptr<Recordset> record = db.query(buffer);
+		if (record)
+		{
+			Log::d("record is true");
+		}
 		if (record && record->MoveNext())
 		{
 			Recordset& row(*record);
@@ -30,7 +34,6 @@ void ActivationCodeQuery::onRequest(Database& db)
 		{
 			activation->status = ActivationStatus::INVALID_CODE;
 		}
-		db.cleanRecordset(record);
 		break;
 	}
 	case ActivationCodeQuery::UPDATE_ACTIVATION_STATUS:

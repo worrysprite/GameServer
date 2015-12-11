@@ -10,6 +10,9 @@
     <Filter Include="src\database">
       <UniqueIdentifier>{ed909891-866d-4c82-8b77-38378458af5c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\console">
+      <UniqueIdentifier>{03e1577e-7bb3-406b-85b8-2836006a8549}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Client.cpp">
@@ -39,7 +42,18 @@
     <ClCompile Include="..\src\gameLogic\SDKControl.cpp">
       <Filter>src\gameLogic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\GameServer.cpp" />
+    <ClCompile Include="..\src\ConsoleClient.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GameServer.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\console\ConsoleLogin.cpp">
+      <Filter>src\console</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\database\ConsoleLoginQuery.cpp">
+      <Filter>src\database</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Client.h">
@@ -66,6 +80,17 @@
     <ClInclude Include="..\src\gameLogic\SDKControl.h">
       <Filter>src\gameLogic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\GameServer.h" />
+    <ClInclude Include="..\src\ConsoleClient.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GameServer.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\console\ConsoleLogin.h">
+      <Filter>src\console</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\database\ConsoleLoginQuery.h">
+      <Filter>src\database</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

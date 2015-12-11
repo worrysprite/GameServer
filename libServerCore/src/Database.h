@@ -59,9 +59,8 @@ namespace ws
 		bool isConnected();
 		inline my_ulonglong getAffectedRows() { return numAffectedRows; };
 		inline my_ulonglong getResultRows() { return numResultRows; };
-		Recordset* query(const char* strSQL, int nCommit = 1);
+		std::shared_ptr<Recordset> query(const char* strSQL, int nCommit = 1);
 		my_ulonglong getInsertId();
-		void cleanRecordset(Recordset* recordset);
 
 	protected:
 		MYSQL_CONFIG dbConfig;

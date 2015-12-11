@@ -217,11 +217,16 @@ namespace ws
 			Log::e("Request Windows Socket Version 2.2 Error!");
 			return -1;
 		}
+		isInitWinsock = true;
+		return 0;
 	}
 
 	int ServerSocket::startListen()
 	{
-		initWinsock();
+		if (-1 == initWinsock())
+		{
+			return -1;
+		}
 		// create an i/o completion port
 		completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 		if (NULL == completionPort)
@@ -236,7 +241,7 @@ namespace ws
 
 		// create threads to process i/o completion port events
 		std::function<int()> eventProc(std::bind(&ServerSocket::processEventThread, this));
-		int numThreads = config.numIOCPThreads;
+		DWORD numThreads = config.numIOCPThreads;
 		if (numThreads == 0)
 		{
 			numThreads = mySysInfo.dwNumberOfProcessors * 2;
@@ -730,12 +735,12 @@ namespace ws
 	{
 		ClientSocket* cs = config.createClient();
 		cs->server = this;
-		cs->id = ++nextClientID;
 		cs->lastActiveTime = std::chrono::steady_clock::now();
 		cs->socket = client;
 		cs->addr = addr;
 
 		addMtx.lock();
+		cs->id = ++nextClientID;
 		addingClients.insert(std::make_pair(nextClientID, cs));
 		addMtx.unlock();
 		return cs;

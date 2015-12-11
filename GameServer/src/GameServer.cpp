@@ -1,4 +1,5 @@
 #include "GameServer.h"
+#include "ConsoleClient.h"
 
 GameServer* GameServer::_instance = nullptr;
 
@@ -86,6 +87,16 @@ ClientSocket* GameServer::createClient()
 }
 
 void GameServer::destroyClient(ClientSocket* cs)
+{
+	delete cs;
+}
+
+ClientSocket* GameServer::createConsole()
+{
+	return new ConsoleClient;
+}
+
+void GameServer::destroyConsole(ClientSocket* cs)
 {
 	delete cs;
 }

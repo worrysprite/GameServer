@@ -27,6 +27,8 @@ private:
 
 	ClientSocket* createClient();
 	void destroyClient(ClientSocket* cs);
+	ClientSocket* createConsole();
+	void destroyConsole(ClientSocket* cs);
 
 	static GameServer* _instance;
 	ServerSocket* logicServer;

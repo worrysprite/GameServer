@@ -50,7 +50,6 @@ namespace ws
 		virtual ~ClientSocket();
 
 		long long				id;
-		bool					isClosing;
 		bool					isUpdate;
 		std::chrono::steady_clock::time_point lastActiveTime;
 
@@ -61,6 +60,7 @@ namespace ws
 		virtual void	flush();
 
 	protected:
+		bool					isClosing;
 		Socket					socket;
 		sockaddr_in				addr;
 		ServerSocket*			server;
@@ -94,7 +94,7 @@ namespace ws
 	private:
 		ServerConfig							config;
 		long long								nextClientID;
-		unsigned int							numClients;
+		size_t									numClients;
 		Socket									listenSocket;
 		std::mutex								addMtx;
 		std::map<long long, ClientSocket*>		addingClients;
