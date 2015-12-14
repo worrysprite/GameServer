@@ -54,6 +54,9 @@
     <ClCompile Include="..\src\database\ConsoleLoginQuery.cpp">
       <Filter>src\database</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\console\ConsoleProfiler.cpp">
+      <Filter>src\console</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Client.h">
@@ -91,6 +94,9 @@
     </ClInclude>
     <ClInclude Include="..\src\database\ConsoleLoginQuery.h">
       <Filter>src\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\console\ConsoleProfiler.h">
+      <Filter>src\console</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

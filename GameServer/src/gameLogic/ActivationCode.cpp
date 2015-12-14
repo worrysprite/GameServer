@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "ActivationCode.h"
-#include "Log.h"
+#include "utils/Log.h"
 #include "GameServer.h"
 
 ActivationCode* ActivationCode::_instance = nullptr;

@@ -22,10 +22,10 @@ void ConsoleLoginQuery::queryUserinfo(const ConsoleLoginMessage& msg, CallbackTy
 
 void ConsoleLoginQuery::onRequest(Database& db)
 {
-	char sql[] = "SELECT `id` FROM `t_admin_user` WHERE `username`=%s AND `password`=%s;";
+	char sql[] = "SELECT `id` FROM `t_admin_user` WHERE `username`='%s' AND `password`='%s';";
 	char buffer[1024] = {0};
-	sprintf(buffer, sql, loginMsg->username, loginMsg->password);
-	std::shared_ptr<Recordset> record = db.query(buffer);
+	sprintf(buffer, sql, loginMsg->username.c_str(), loginMsg->password.c_str());
+	std::shared_ptr<ws::Recordset> record = db.query(buffer);
 	if (record && record->MoveNext())
 	{
 		(*record) >> loginMsg->id;

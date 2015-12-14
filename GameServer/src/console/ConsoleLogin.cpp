@@ -14,19 +14,19 @@ ConsoleLogin* ConsoleLogin::getInstance()
 	return _instance;
 }
 
-void ConsoleLogin::processLogin(long long id, ConsoleLoginMessage* msg)
+void ConsoleLogin::processLogin(long long clientID, ConsoleLoginMessage* msg)
 {
 	assert(msg != nullptr);
 	ConsoleLoginQuery* query = new ConsoleLoginQuery;
-	query->queryUserinfo(*msg, std::bind(&ConsoleLogin::onLoginGet, this, id, std::placeholders::_1));
+	query->queryUserinfo(*msg, std::bind(&ConsoleLogin::onLoginGet, this, clientID, std::placeholders::_1));
 	GameServer::getInstance()->getDBQueue()->addQueueMsg(std::shared_ptr<DBRequest>(query));
 }
 
-void ConsoleLogin::onLoginGet(long long id, ConsoleLoginMessage* msg)
+void ConsoleLogin::onLoginGet(long long clientID, ConsoleLoginMessage* msg)
 {
 	if (msg->id)
 	{
-		auto client(GameServer::getInstance()->getConsoleServer()->getClient(id));
+		auto client(GameServer::getInstance()->getConsoleServer()->getClient(clientID));
 		if (!client)
 		{
 			Log::w("client is disconnect before sql execute");
@@ -49,6 +49,6 @@ void ConsoleLogin::onLoginGet(long long id, ConsoleLoginMessage* msg)
 	}
 	else
 	{
-		GameServer::getInstance()->getConsoleServer()->kickClient(id);
+		GameServer::getInstance()->getConsoleServer()->kickClient(clientID);
 	}
 }

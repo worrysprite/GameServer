@@ -1,7 +1,7 @@
 #include "SDKControl.h"
 #include "ServerSocket.h"
 #include <assert.h>
-#include "Log.h"
+#include "utils/Log.h"
 #include "GameServer.h"
 
 SDKControl::SDKControl()

@@ -4,41 +4,38 @@
     <Filter Include="src">
       <UniqueIdentifier>{6abb2bff-ece2-4bf0-881f-5440479540b8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\utils">
+      <UniqueIdentifier>{0cf38b8e-c655-4161-bc73-4ee711bbf388}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\ByteArray.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Database.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ServerSocket.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Log.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\Timer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Actor.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\utils\ByteArray.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\Log.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\Timer.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utils\Profiler.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\ByteArray.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\Database.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\ServerSocket.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Log.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\Timer.h">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="..\src\Actor.h">
@@ -46,6 +43,18 @@
     </ClInclude>
     <ClInclude Include="..\src\ObjectPool.h">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\ByteArray.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\Log.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\Timer.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\Profiler.h">
+      <Filter>src\utils</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

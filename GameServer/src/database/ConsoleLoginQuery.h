@@ -4,6 +4,8 @@
 #include "Database.h"
 #include "Message.h"
 
+using ws::Database;
+
 class ConsoleLoginQuery : public ws::DBRequest
 {
 public:

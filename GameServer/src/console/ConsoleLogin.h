@@ -8,13 +8,13 @@ class ConsoleLogin
 public:
 	static ConsoleLogin* getInstance();
 
-	void processLogin(long long id, ConsoleLoginMessage* msg);
+	void processLogin(long long clientID, ConsoleLoginMessage* msg);
 
 private:
 	ConsoleLogin() { }
 	static ConsoleLogin* _instance;
 	
-	void onLoginGet(long long id, ConsoleLoginMessage* msg);
+	void onLoginGet(long long clientID, ConsoleLoginMessage* msg);
 };
 
 #endif

@@ -4,6 +4,8 @@
 #include "Database.h"
 #include "Message.h"
 
+using ws::Database;
+
 class SDKConfigQuery : public ws::DBRequest
 {
 public:

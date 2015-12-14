@@ -1,5 +1,8 @@
 #include "ConsoleClient.h"
 #include "console/ConsoleLogin.h"
+#include "console/ConsoleProfiler.h"
+
+using ws::utils::Log;
 
 ConsoleClient::ConsoleClient() :pHead(nullptr)
 {
@@ -56,6 +59,14 @@ void ConsoleClient::onRecv()
 		case CMD_CONSOLE_SUBSCRIBE:
 			msg = new ConsoleSubscribeMessage;
 			msg->unpack(*readBuffer);
+			if (dynamic_cast<ConsoleSubscribeMessage*>(msg)->subscribed)
+			{
+				ConsoleProfiler::getInstance()->subscribeProfiler(id);
+			}
+			else
+			{
+				ConsoleProfiler::getInstance()->unsubscribeProfiler(id);
+			}
 			break;
 		}	// end switch
 		delete msg;

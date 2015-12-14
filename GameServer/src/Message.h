@@ -3,7 +3,7 @@
 
 #include <string>
 #include <memory.h>
-#include "ByteArray.h"
+#include "utils/ByteArray.h"
 
 enum RequestCommand
 {
@@ -33,7 +33,7 @@ enum ConsoleCommand
 	CMD_CONSOLE_MAX
 };
 
-using namespace ws;
+using ws::utils::ByteArray;
 
 #pragma pack(push, 1)
 class Message
@@ -158,7 +158,18 @@ struct ConsoleLoginMessage : public Message
 
 struct ConsoleSubscribeMessage : public Message
 {
+	ConsoleSubscribeMessage()
+	{
+		zeroInit(subscribed, memoryPeak);
+	}
 
+	unsigned char	subscribed;
+	unsigned short	numOnline;
+	unsigned int	numDBRequests;
+	unsigned int	ioDataPoolSize;
+	unsigned int	ioDataPostedSize;
+	unsigned int	memoryUsed;
+	unsigned int	memoryPeak;
 
 	virtual void unpack(ByteArray& input);
 	virtual void pack(ByteArray& output);

@@ -13,7 +13,7 @@ void SDKConfigQuery::onRequest(Database& db)
 	char sql[] = "SELECT `opensdk` FROM `t_sdk_config` WHERE `version`=%u AND `platform`=%u;";
 	char buffer[1024] = {0};
 	sprintf(buffer, sql, version, platform);
-	std::shared_ptr<Recordset> record = db.query(buffer);
+	std::shared_ptr<ws::Recordset> record = db.query(buffer);
 	if (record && record->MoveNext())
 	{
 		config = new SDKConfigMessage;

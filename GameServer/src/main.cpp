@@ -1,10 +1,10 @@
 #include <thread>
 #include <functional>
 #include <chrono>
-#include "Log.h"
+#include "utils/Log.h"
 #include "GameServer.h"
 
-using namespace ws;
+using namespace ws::utils;
 
 bool isExit = false;
 
@@ -36,7 +36,7 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
 
 int main(int argc, char *argv[])
 {
-	Log::level = LogLevel::_DEBUG_;
+	Log::level = LogLevel::_VERBOSE_;
 #ifdef WIN32
 	if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, true))
 	{

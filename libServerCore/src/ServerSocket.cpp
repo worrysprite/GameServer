@@ -1,5 +1,5 @@
 #include "ServerSocket.h"
-#include "Log.h"
+#include "utils/Log.h"
 #include <errno.h>
 #include <string.h>
 
@@ -48,7 +48,7 @@ namespace ws
 #ifdef WIN32 //-----------------------windows implements start-------------------------------
 	// main thread
 	ServerSocket::ServerSocket(const ServerConfig& cfg) :
-				config(cfg), completionPort(nullptr), lpfnAcceptEx(nullptr), nextClientID(0), listenSocket(0)
+		config(cfg), completionPort(nullptr), lpfnAcceptEx(nullptr), nextClientID(0), listenSocket(0), ioDataPoolSize(0), ioDataPostedSize(0)
 	{
 		assert(cfg.createClient != nullptr);
 		assert(cfg.destroyClient != nullptr);
@@ -338,6 +338,8 @@ namespace ws
 		ioData->wsabuff.buf = ioData->buffer;
 		initOverlappedData(*ioData, operation, size, client);
 		ioDataPosted.push_back(ioData);
+		ioDataPoolSize = ioDataPool.size();
+		ioDataPostedSize = ioDataPosted.size();
 		ioDataPool.unlock();
 		return ioData;
 	}
@@ -348,6 +350,8 @@ namespace ws
 		ioDataPool.lock();
 		ioDataPosted.remove(data);
 		ioDataPool.free(data);
+		ioDataPoolSize = ioDataPool.size();
+		ioDataPostedSize = ioDataPosted.size();
 		ioDataPool.unlock();
 	}
 
@@ -679,8 +683,8 @@ namespace ws
 
 #endif
 
-	// socket thread
-	size_t ServerSocket::getCount()
+	// socket thread and main thread
+	size_t ServerSocket::numOnlines()
 	{
 		return numClients;
 	}

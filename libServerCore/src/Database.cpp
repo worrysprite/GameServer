@@ -1,11 +1,12 @@
 #include "Database.h"
-#include "Log.h"
+#include "utils/Log.h"
 #include <string.h>
 #include <stdlib.h>
 #include <iostream>
 
 namespace ws
 {
+	using namespace utils;
 //===================== Recordset Implements ========================
 	Recordset::Recordset(MYSQL_RES* pMysqlRes) :m_pMysqlRes(pMysqlRes)
 	{
@@ -252,23 +253,24 @@ namespace ws
 
 	void DBQueue::addQueueMsg(PtrDBRequest request)
 	{
-		m_WorkMutex.lock();
-		m_WorkQueue.push_back(request);
-		m_WorkMutex.unlock();
+		workMtx.lock();
+		workQueue.push_back(request);
+		workQueueLength = workQueue.size();
+		workMtx.unlock();
 	}
 
 	// main thread
 	void DBQueue::update()
 	{
-		DBRequestList finishQueue;
-		m_FinishMutex.lock();
-		m_FinishQueue.swap(finishQueue);
-		m_FinishMutex.unlock();
+		DBRequestList tmpQueue;
+		finishMtx.lock();
+		tmpQueue.swap(finishQueue);
+		finishMtx.unlock();
 
-		while (!finishQueue.empty())
+		while (!tmpQueue.empty())
 		{
-			PtrDBRequest request = finishQueue.front();
-			finishQueue.pop_front();
+			PtrDBRequest request = tmpQueue.front();
+			tmpQueue.pop_front();
 			request->onFinish();
 		}
 	}
@@ -276,21 +278,22 @@ namespace ws
 	DBQueue::PtrDBRequest DBQueue::getRequest()
 	{
 		PtrDBRequest request(nullptr);
-		m_WorkMutex.lock();
-		if (!m_WorkQueue.empty())
+		workMtx.lock();
+		if (!workQueue.empty())
 		{
-			request = m_WorkQueue.front();
-			m_WorkQueue.pop_front();
+			request = workQueue.front();
+			workQueue.pop_front();
+			workQueueLength = workQueue.size();
 		}
-		m_WorkMutex.unlock();
+		workMtx.unlock();
 		return request;
 	}
 
 	void DBQueue::finishRequest(PtrDBRequest request)
 	{
-		m_FinishMutex.lock();
-		m_FinishQueue.push_back(request);
-		m_FinishMutex.unlock();
+		finishMtx.lock();
+		finishQueue.push_back(request);
+		finishMtx.unlock();
 	}
 
 	void DBQueue::DBWorkThread()

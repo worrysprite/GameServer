@@ -87,25 +87,25 @@ namespace ws
 		DBQueue();
 		virtual ~DBQueue();
 
-		void init(int nThread, const MYSQL_CONFIG& config);
-
-		void addQueueMsg(PtrDBRequest request);
-		void update();
+		void				init(int nThread, const MYSQL_CONFIG& config);
+		void				addQueueMsg(PtrDBRequest request);
+		void				update();
+		inline size_t		getQueueLength(){ return workQueueLength; }
 
 	private:
-		MYSQL_CONFIG config;
-		PtrDBRequest getRequest();
-		void finishRequest(PtrDBRequest request);
-		void DBWorkThread();
-
 		typedef std::list<PtrDBRequest> DBRequestList;
-		std::mutex m_WorkMutex;
-		DBRequestList m_WorkQueue;
-		std::mutex m_FinishMutex;
-		DBRequestList m_FinishQueue;
+		PtrDBRequest		getRequest();
+		void				finishRequest(PtrDBRequest request);
+		void				DBWorkThread();
 
+		MYSQL_CONFIG		config;
+		std::mutex			workMtx;
+		DBRequestList		workQueue;
+		size_t				workQueueLength;
+		std::mutex			finishMtx;
+		DBRequestList		finishQueue;
+		bool				isExit;
 		std::vector<std::thread*> workerThreads;
-		bool isExit;
 	};
 
 }

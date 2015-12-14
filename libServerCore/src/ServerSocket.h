@@ -16,7 +16,7 @@ typedef SOCKET Socket;
 #include <fcntl.h>
 #include <strings.h>
 #include <unistd.h>
-#define EPOLL_SIZE 5000
+#define EPOLL_SIZE 1000
 typedef int Socket;
 #endif
 
@@ -30,9 +30,8 @@ typedef int Socket;
 #include <vector>
 #include <set>
 #include <map>
-#include "ByteArray.h"
+#include "utils/ByteArray.h"
 #include "Database.h"
-#include "Timer.h"
 #include "ObjectPool.h"
 
 #define BUFFER_SIZE 1024
@@ -41,6 +40,8 @@ typedef int Socket;
 
 namespace ws
 {
+	using namespace utils;
+
 	class ServerSocket;
 	class ClientSocket
 	{
@@ -89,7 +90,7 @@ namespace ws
 		void				update();
 		void				kickClient(long long clientID);
 		ClientSocket*		getClient(long long clientID);
-		size_t				getCount();
+		size_t				numOnlines();
 		
 	private:
 		ServerConfig							config;
@@ -107,6 +108,10 @@ namespace ws
 		void				flushClient(ClientSocket* client);
 
 #ifdef WIN32
+	public:
+		inline size_t getIODataPoolSize(){ return ioDataPoolSize; }
+		inline size_t getIODataPostedSize(){ return ioDataPostedSize; }
+
 	private:
 		enum SocketOperation
 		{
@@ -130,6 +135,8 @@ namespace ws
 		
 		ObjectPool<OverlappedData> ioDataPool;
 		std::list<OverlappedData*> ioDataPosted;
+		size_t ioDataPoolSize;
+		size_t ioDataPostedSize;
 		std::list<std::thread*> eventThreads;
 		static bool isInitWinsock;
 

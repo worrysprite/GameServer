@@ -1,5 +1,5 @@
 #include "Client.h"
-#include "Log.h"
+#include "utils/Log.h"
 #include "gameLogic/ActivationCode.h"
 #include "gameLogic/UIControl.h"
 #include "gameLogic/SDKControl.h"

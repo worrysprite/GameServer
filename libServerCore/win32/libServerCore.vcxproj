@@ -36,20 +36,22 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Actor.cpp" />
-    <ClCompile Include="..\src\ByteArray.cpp" />
     <ClCompile Include="..\src\Database.cpp" />
-    <ClCompile Include="..\src\Log.cpp" />
     <ClCompile Include="..\src\ServerSocket.cpp" />
-    <ClCompile Include="..\src\Timer.cpp" />
+    <ClCompile Include="..\src\utils\ByteArray.cpp" />
+    <ClCompile Include="..\src\utils\Log.cpp" />
+    <ClCompile Include="..\src\utils\Profiler.cpp" />
+    <ClCompile Include="..\src\utils\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Actor.h" />
-    <ClInclude Include="..\src\ByteArray.h" />
     <ClInclude Include="..\src\Database.h" />
-    <ClInclude Include="..\src\Log.h" />
     <ClInclude Include="..\src\ObjectPool.h" />
     <ClInclude Include="..\src\ServerSocket.h" />
-    <ClInclude Include="..\src\Timer.h" />
+    <ClInclude Include="..\src\utils\ByteArray.h" />
+    <ClInclude Include="..\src\utils\Log.h" />
+    <ClInclude Include="..\src\utils\Profiler.h" />
+    <ClInclude Include="..\src\utils\Timer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D4054E0B-9E83-41EF-AB48-A27CAB563070}</ProjectGuid>

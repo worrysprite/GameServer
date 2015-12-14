@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "UIControl.h"
-#include "Log.h"
+#include "utils/Log.h"
 #include "GameServer.h"
 
 UIControl::UIControl()
@@ -49,7 +49,6 @@ void UIControl::onUIConfigGet(long long clientID, UIConfigMessage* data)
 
 	client->send(packet);
 	client->flush();
-	client = nullptr;
 }
 
 

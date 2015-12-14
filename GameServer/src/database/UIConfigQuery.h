@@ -4,6 +4,8 @@
 #include "Database.h"
 #include "Message.h"
 
+using ws::Database;
+
 class UIConfigQuery : public ws::DBRequest
 {
 public:

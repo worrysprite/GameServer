@@ -96,10 +96,14 @@ void ConsoleLoginMessage::pack(ByteArray& output)
 
 void ConsoleSubscribeMessage::unpack(ByteArray& input)
 {
-
+	input.lock();
+	subscribed = input.readUnsignedByte();
+	input.unlock();
 }
 
 void ConsoleSubscribeMessage::pack(ByteArray& output)
 {
-
+	output.lock();
+	writeBlock(output, subscribed, memoryPeak)
+	output.unlock();
 }

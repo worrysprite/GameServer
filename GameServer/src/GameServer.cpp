@@ -33,8 +33,8 @@ GameServer::GameServer()
 	svrConfig.maxConnection = 50;
 	svrConfig.numIOCPThreads = 1;	// auto
 	svrConfig.kickTime = std::chrono::minutes(30);
-	svrConfig.createClient = std::bind(&GameServer::createClient, this);
-	svrConfig.destroyClient = std::bind(&GameServer::destroyClient, this, std::placeholders::_1);
+	svrConfig.createClient = std::bind(&GameServer::createConsole, this);
+	svrConfig.destroyClient = std::bind(&GameServer::destroyConsole, this, std::placeholders::_1);
 	consoleServer = new ServerSocket(svrConfig);
 
 	// init db
@@ -52,6 +52,9 @@ GameServer::GameServer()
 	dbConfig.strDB = "star2015";
 	dbQueue = new DBQueue;
 	dbQueue->init(5, dbConfig);
+
+	// init timer
+	timer = new utils::Timer;
 }
 
 GameServer::~GameServer()
@@ -59,6 +62,7 @@ GameServer::~GameServer()
 	delete logicServer;
 	delete consoleServer;
 	delete dbQueue;
+	delete timer;
 }
 
 int GameServer::startListen()
@@ -79,6 +83,7 @@ void GameServer::update()
 	logicServer->update();
 	consoleServer->update();
 	dbQueue->update();
+	timer->update();
 }
 
 ClientSocket* GameServer::createClient()
