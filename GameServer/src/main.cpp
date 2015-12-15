@@ -36,7 +36,7 @@ BOOL CtrlHandler(DWORD fdwCtrlType)
 
 int main(int argc, char *argv[])
 {
-	Log::level = LogLevel::_VERBOSE_;
+	Log::level = LogLevel::_DEBUG_;
 #ifdef WIN32
 	if (SetConsoleCtrlHandler((PHANDLER_ROUTINE)CtrlHandler, true))
 	{

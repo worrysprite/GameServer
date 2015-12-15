@@ -14,12 +14,12 @@ void UIConfigQuery::onRequest(Database& db)
 	char buffer[1024] = {0};
 	sprintf(buffer, sql, version, platform);
 	std::shared_ptr<ws::Recordset> record = db.query(buffer);
-	size_t numRows = db.getResultRows();
+	size_t numRows = (size_t)db.getResultRows();
 	if (numRows > 0)
 	{
 		config->numConfig = (unsigned short)numRows;
 		config->configList = new UIConfig[numRows];
-		for (int i(0); i < numRows; ++i)
+		for (size_t i(0); i < numRows; ++i)
 		{
 			if (record && record->MoveNext())
 			{

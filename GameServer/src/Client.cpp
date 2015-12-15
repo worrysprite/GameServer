@@ -73,8 +73,16 @@ void Client::onRecv()
 			SDKControl::getInstance()->processSDKConfig(id, (SDKConfigMessage*)msg);
 			break;
 		}	// end switch
+		readBuffer->cutHead(pHead->packSize);
 		delete msg;
 		delete pHead;
 		pHead = NULL;
 	}
+}
+
+void Client::parseWebsocketHandshake()
+{
+	char buffer[1024] = {0};
+	readBuffer->readObject(buffer, 1024);
+	
 }

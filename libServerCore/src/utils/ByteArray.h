@@ -15,7 +15,7 @@ namespace ws
 			ByteArray(void);
 			ByteArray(unsigned int length);
 			ByteArray(void* bytes, unsigned int length);
-			~ByteArray(void);
+			virtual ~ByteArray(void);
 
 			size_t				position;
 			inline size_t		getSize() { return contentSize; }

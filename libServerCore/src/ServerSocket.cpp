@@ -58,7 +58,7 @@ namespace ws
 	ServerSocket::~ServerSocket()
 	{
 		// stop event threads
-		for (int i = 0; i < eventThreads.size(); ++i)
+		for (size_t i = 0; i < eventThreads.size(); ++i)
 		{
 			postCloseServer();
 		}
@@ -416,18 +416,6 @@ namespace ws
 		PostQueuedCompletionStatus(completionPort, 0, listenSocket, &(ioData->overlapped));
 	}
 
-	// socket thread
-	void ServerSocket::writeClientBuffer(ClientSocket* client, char* data, size_t size)
-	{
-		client->readBuffer->lock();
-		size_t oldPosition = client->readBuffer->position;
-		// write at the end
-		client->readBuffer->position = client->readBuffer->getSize();
-		client->readBuffer->writeObject(data, size);
-		client->readBuffer->position = oldPosition;
-		client->readBuffer->unlock();
-	}
-
 	// main thread
 	void ServerSocket::destroyClient(ClientSocket* client)
 	{
@@ -655,18 +643,6 @@ namespace ws
 		client->writeBuffer->unlock();
 	}
 
-	// socket thread
-	void ServerSocket::writeClientBuffer(ClientSocket* client, char* data, size_t size)
-	{
-		client->readBuffer->lock();
-		size_t oldPosition = client->readBuffer->position;
-		// write at the end
-		client->readBuffer->position = client->readBuffer->getSize();
-		client->readBuffer->writeObject(data, size);
-		client->readBuffer->position = oldPosition;
-		client->readBuffer->unlock();
-	}
-
 	// main thread
 	void ServerSocket::destroyClient(ClientSocket* client)
 	{
@@ -771,5 +747,17 @@ namespace ws
 			return;
 		}
 		client->isClosing = true;
+	}
+
+	// socket thread
+	void ServerSocket::writeClientBuffer(ClientSocket* client, char* data, size_t size)
+	{
+		client->readBuffer->lock();
+		size_t oldPosition = client->readBuffer->position;
+		// write at the end
+		client->readBuffer->position = client->readBuffer->getSize();
+		client->readBuffer->writeObject(data, size);
+		client->readBuffer->position = oldPosition;
+		client->readBuffer->unlock();
 	}
 }

@@ -225,7 +225,7 @@ namespace ws
 	}
 
 //===================== DBRequestQueue Implements ========================
-	DBQueue::DBQueue() : isExit(false)
+	DBQueue::DBQueue() : isExit(false), workQueueLength(0)
 	{
 
 	}

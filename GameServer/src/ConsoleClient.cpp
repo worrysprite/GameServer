@@ -69,6 +69,7 @@ void ConsoleClient::onRecv()
 			}
 			break;
 		}	// end switch
+		readBuffer->cutHead(pHead->packSize);
 		delete msg;
 		delete pHead;
 		pHead = NULL;

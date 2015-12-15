@@ -51,7 +51,6 @@ namespace ws
 		virtual ~ClientSocket();
 
 		long long				id;
-		bool					isUpdate;
 		std::chrono::steady_clock::time_point lastActiveTime;
 
 		char*			getIP() { return inet_ntoa(addr.sin_addr); }
@@ -62,6 +61,7 @@ namespace ws
 
 	protected:
 		bool					isClosing;
+		bool					isUpdate;
 		Socket					socket;
 		sockaddr_in				addr;
 		ServerSocket*			server;

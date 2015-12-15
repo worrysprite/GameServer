@@ -45,7 +45,6 @@ void ConsoleProfiler::unsubscribeProfiler(long long clientID)
 
 void ConsoleProfiler::onTimer1000()
 {
-	Log::v("on timer 1000");
 	ServerSocket* logicServer = GameServer::getInstance()->getLogicServer();
 	ServerSocket* consoleServer = GameServer::getInstance()->getConsoleServer();
 	DBQueue* dbQueue = GameServer::getInstance()->getDBQueue();
