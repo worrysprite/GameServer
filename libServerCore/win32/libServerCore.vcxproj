@@ -30,10 +30,10 @@
   <ItemGroup>
     <ClInclude Include="..\src\Actor.h" />
     <ClInclude Include="..\src\Database.h" />
-    <ClInclude Include="..\src\ObjectPool.h" />
     <ClInclude Include="..\src\ServerSocket.h" />
     <ClInclude Include="..\src\utils\ByteArray.h" />
     <ClInclude Include="..\src\utils\Log.h" />
+    <ClInclude Include="..\src\utils\ObjectPool.h" />
     <ClInclude Include="..\src\utils\Profiler.h" />
     <ClInclude Include="..\src\utils\Timer.h" />
   </ItemGroup>
@@ -106,7 +106,6 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -127,7 +126,6 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)mysql\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>

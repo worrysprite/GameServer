@@ -21,7 +21,7 @@ void GameServer::cleanup()
 GameServer::GameServer()
 {
 	ServerConfig svrConfig;
-	svrConfig.listenPort = 10001;
+	svrConfig.listenPort = 10002;
 	svrConfig.maxConnection = 2000;
 	svrConfig.numIOCPThreads = 0;	// auto
 	svrConfig.kickTime = std::chrono::minutes(2);

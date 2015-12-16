@@ -41,9 +41,6 @@
     <ClInclude Include="..\src\Actor.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ObjectPool.h">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\utils\ByteArray.h">
       <Filter>src\utils</Filter>
     </ClInclude>
@@ -54,6 +51,9 @@
       <Filter>src\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\src\utils\Profiler.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\ObjectPool.h">
       <Filter>src\utils</Filter>
     </ClInclude>
   </ItemGroup>

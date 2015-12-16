@@ -518,13 +518,12 @@ namespace ws
 
 	int ServerSocket::startListen()
 	{
-		listenSocket = socket(PF_INET, SOCK_STREAM, 0);
+		listenSocket = socket(PF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
 		if (listenSocket < 0)
 		{
 			Log::e("create listen socket error.");
 			return -1;
 		}
-		setNonblocking(listenSocket);
 
 		sockaddr_in srvAddr;
 		srvAddr.sin_addr.s_addr = htonl(INADDR_ANY);

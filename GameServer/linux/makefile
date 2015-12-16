@@ -15,6 +15,7 @@ TARGET = GameServer
 SOURCES = $(wildcard $(SrcDir)/*.cpp)
 SOURCES += $(wildcard $(SrcDir)/database/*.cpp)
 SOURCES += $(wildcard $(SrcDir)/gameLogic/*cpp)
+SOURCES += $(wildcard $(SrcDir)/console/*.cpp)
 OBJECTS = $(patsubst $(SrcDir)/%.cpp,%.o,$(SOURCES))
 
 $(TARGET) : $(OBJECTS) ServerCore

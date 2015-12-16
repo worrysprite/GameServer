@@ -1,6 +1,8 @@
 #ifndef __WS_UTILS_PROFILER_H__
 #define __WS_UTILS_PROFILER_H__
 
+#include <stdlib.h>
+
 namespace ws
 {
 	namespace utils

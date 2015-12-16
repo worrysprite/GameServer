@@ -30,9 +30,9 @@ typedef int Socket;
 #include <vector>
 #include <set>
 #include <map>
-#include "utils/ByteArray.h"
 #include "Database.h"
-#include "ObjectPool.h"
+#include "utils/ByteArray.h"
+#include "utils/ObjectPool.h"
 
 #define BUFFER_SIZE 1024
 #define ADDRESS_LENGTH sizeof(sockaddr_in)+16

@@ -11,8 +11,15 @@ INC = -I$(SrcDir) -I/usr/include/mysql
 LIB = 
 
 TARGET = libServerCore.a
-SOURCES = $(wildcard $(SrcDir)/*.cpp)
+SOURCES = $(wildcard $(SrcDir)/*.cpp) \
+		  $(wildcard $(SrcDir)/utils/*.cpp)
 OBJECTS = $(patsubst $(SrcDir)/%.cpp,%.o,$(SOURCES))
+
+OutputDir =
+ifneq ($(DebugDir), $(wildcard $(DebugDir)))
+	OutputDir := Debug
+	OutputDir := Debug/utils
+endif
 
 $(TARGET) : $(OBJECTS)
 	ar rv $(DebugDir)/$(TARGET) $(addprefix $(DebugDir)/,$?)
