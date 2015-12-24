@@ -18,8 +18,8 @@ namespace ws
 			virtual ~ByteArray(void);
 
 			size_t				position;
-			inline size_t		getSize() { return contentSize; }
-			inline size_t		available() { return contentSize - position; };
+			inline size_t		getSize() const { return contentSize; }
+			inline size_t		available() const { return contentSize - position; };
 			void				truncate();
 			void				cutHead(size_t length, char* pOut = nullptr);
 			void				cutHead(size_t length, ByteArray* ba);
@@ -29,13 +29,13 @@ namespace ws
 			inline void			unlock(){ mtx.unlock(); };
 			inline const void*	getBytes(){ return pBytes; };
 
-			bool				readBoolean();
 			char				readByte();
 			unsigned char		readUnsignedByte();
 			short				readShort();
 			unsigned short		readUnsignedShort();
 			int					readInt();
 			unsigned int		readUnsignedInt();
+			unsigned long long	readUnsignedInt64();
 			float				readFloat();
 			double				readDouble();
 			/************************************************************************/
@@ -52,6 +52,8 @@ namespace ws
 			/************************************************************************/
 			size_t				readObject(void* outBuff, size_t size = 0);
 			std::string			readString(size_t length);
+			template <typename T> ByteArray& operator>>(T& val);
+			template <typename T> ByteArray& readType(T& val);
 
 			void				writeBoolean(const bool& b);
 			void				writeByte(const char& b);
@@ -60,11 +62,13 @@ namespace ws
 			void				writeUnsignedShort(const unsigned short& s);
 			void				writeInt(const int& i);
 			void				writeUnsignedInt(const unsigned int& i);
+			void				writeUnsignedInt64(const unsigned long long& ll);
 			void				writeFloat(const float& f);
 			void				writeDouble(const double& d);
 			void				writeBytes(const ByteArray& inBytes, size_t offset = 0, size_t length = 0);
 			void				writeObject(const void* inBuff, size_t length);
-			template <typename T> void writeType(const T& val);
+			template <typename T> ByteArray& operator<<(const T& val);
+			template <typename T> ByteArray& writeType(const T& val);
 
 		private:
 			static const unsigned int DEFAULT_SIZE = 100;

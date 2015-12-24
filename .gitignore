@@ -29,6 +29,7 @@
 
 # VisualStudio cache
 *.sdf
+*.opensdf
 *.suo
 Debug
 Release

@@ -15,8 +15,6 @@ public:
 
 private:
 	MessageHead* pHead;
-
-	void parseWebsocketHandshake();
 };
 
 #endif

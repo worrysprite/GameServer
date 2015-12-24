@@ -1,5 +1,6 @@
 #include "GameServer.h"
 #include "ConsoleClient.h"
+#include <openssl/evp.h>
 
 GameServer* GameServer::_instance = nullptr;
 
@@ -55,6 +56,7 @@ GameServer::GameServer()
 
 	// init timer
 	timer = new utils::Timer;
+	OpenSSL_add_all_digests();
 }
 
 GameServer::~GameServer()
@@ -63,6 +65,7 @@ GameServer::~GameServer()
 	delete consoleServer;
 	delete dbQueue;
 	delete timer;
+	EVP_cleanup();
 }
 
 int GameServer::startListen()

@@ -47,12 +47,6 @@ namespace ws
 			pBytes = NULL;
 		}
 
-		bool ByteArray::readBoolean()
-		{
-			READ_TYPE(bool, position, contentSize, pBytes)
-				return false;
-		}
-
 		char ByteArray::readByte()
 		{
 			READ_TYPE(char, position, contentSize, pBytes)
@@ -86,6 +80,12 @@ namespace ws
 		unsigned int ByteArray::readUnsignedInt()
 		{
 			READ_TYPE(unsigned int, position, contentSize, pBytes)
+				return 0;
+		}
+
+		unsigned long long ByteArray::readUnsignedInt64()
+		{
+			READ_TYPE(unsigned long long, position, contentSize, pBytes)
 				return 0;
 		}
 
@@ -150,6 +150,25 @@ namespace ws
 			return std::string();
 		}
 
+		template <typename T>
+		ByteArray& ws::utils::ByteArray::operator>>(T& val)
+		{
+			return readType(val);
+		}
+
+		template <typename T>
+		ByteArray& ws::utils::ByteArray::readType(T& val)
+		{
+			size_t typeSize = sizeof(T);
+			if (position + typeSize <= contentSize)
+			{
+				T* pType = (T*)((intptr_t)pBytes + position);
+				position += typeSize;
+				val = *pType;
+			}
+			return *this;
+		}
+
 		/************************************************************************/
 		/* 写入字节流方法                                                        */
 		/************************************************************************/
@@ -164,7 +183,13 @@ namespace ws
 		}
 
 		template <typename T>
-		void ByteArray::writeType(const T& val)
+		ByteArray& ws::utils::ByteArray::operator<<(const T& val)
+		{
+			return writeType(val);
+		}
+
+		template <typename T>
+		ByteArray& ByteArray::writeType(const T& val)
 		{
 			resize(sizeof(T));
 			memcpy((void*)((intptr_t)pBytes + position), &val, sizeof(T));
@@ -173,6 +198,7 @@ namespace ws
 			{
 				contentSize = position;
 			}
+			return *this;
 		}
 
 		void ByteArray::writeBoolean(const bool& b)
@@ -208,6 +234,11 @@ namespace ws
 		void ByteArray::writeUnsignedInt(const unsigned int& i)
 		{
 			writeType(i);
+		}
+
+		void ByteArray::writeUnsignedInt64(const unsigned long long& ll)
+		{
+			writeType(ll);
 		}
 
 		void ByteArray::writeFloat(const float& f)
@@ -392,5 +423,5 @@ namespace ws
 				}
 			}
 		}
-	}
+}
 }

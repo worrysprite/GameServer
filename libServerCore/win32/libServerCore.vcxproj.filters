@@ -30,6 +30,9 @@
     <ClCompile Include="..\src\utils\Profiler.cpp">
       <Filter>src\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\utils\String.cpp">
+      <Filter>src\utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Database.h">
@@ -54,6 +57,9 @@
       <Filter>src\utils</Filter>
     </ClInclude>
     <ClInclude Include="..\src\utils\ObjectPool.h">
+      <Filter>src\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utils\String.h">
       <Filter>src\utils</Filter>
     </ClInclude>
   </ItemGroup>

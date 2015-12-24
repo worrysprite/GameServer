@@ -25,6 +25,7 @@
     <ClCompile Include="..\src\utils\ByteArray.cpp" />
     <ClCompile Include="..\src\utils\Log.cpp" />
     <ClCompile Include="..\src\utils\Profiler.cpp" />
+    <ClCompile Include="..\src\utils\String.cpp" />
     <ClCompile Include="..\src\utils\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -35,6 +36,7 @@
     <ClInclude Include="..\src\utils\Log.h" />
     <ClInclude Include="..\src\utils\ObjectPool.h" />
     <ClInclude Include="..\src\utils\Profiler.h" />
+    <ClInclude Include="..\src\utils\String.h" />
     <ClInclude Include="..\src\utils\Timer.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
