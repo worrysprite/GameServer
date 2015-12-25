@@ -14,6 +14,9 @@ namespace ws
 			static void split(char* str, const char* seperator, std::vector<char*>& output);
 			static void split(const char* str, const char* seperator, std::vector<std::string>& output);
 
+			static void toLowercase(char* str);
+			static void toUppercase(char* str);
+
 		private:
 		};
 	}

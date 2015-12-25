@@ -27,7 +27,7 @@ namespace ws
 			void				cutTail(size_t length, ByteArray* ba);
 			inline void			lock() { mtx.lock(); };
 			inline void			unlock(){ mtx.unlock(); };
-			inline const void*	getBytes(){ return pBytes; };
+			inline void*		getBytes(){ return pBytes; };
 
 			char				readByte();
 			unsigned char		readUnsignedByte();
@@ -35,6 +35,7 @@ namespace ws
 			unsigned short		readUnsignedShort();
 			int					readInt();
 			unsigned int		readUnsignedInt();
+			long long			readInt64();
 			unsigned long long	readUnsignedInt64();
 			float				readFloat();
 			double				readDouble();
@@ -52,22 +53,40 @@ namespace ws
 			/************************************************************************/
 			size_t				readObject(void* outBuff, size_t size = 0);
 			std::string			readString(size_t length);
-			template <typename T> ByteArray& operator>>(T& val);
+			ByteArray&			operator>>(char& val);
+			ByteArray&			operator>>(unsigned char& val);
+			ByteArray&			operator>>(short& val);
+			ByteArray&			operator>>(unsigned short& val);
+			ByteArray&			operator>>(int& val);
+			ByteArray&			operator>>(unsigned int& val);
+			ByteArray&			operator>>(long long& val);
+			ByteArray&			operator>>(unsigned long long& val);
+			ByteArray&			operator>>(float& val);
+			ByteArray&			operator>>(double& val);
 			template <typename T> ByteArray& readType(T& val);
 
-			void				writeBoolean(const bool& b);
 			void				writeByte(const char& b);
 			void				writeUnsignedByte(const unsigned char& b);
 			void				writeShort(const short& s);
 			void				writeUnsignedShort(const unsigned short& s);
 			void				writeInt(const int& i);
 			void				writeUnsignedInt(const unsigned int& i);
-			void				writeUnsignedInt64(const unsigned long long& ll);
+			void				writeInt64(const long long& ll);
+			void				writeUnsignedInt64(const unsigned long long& ull);
 			void				writeFloat(const float& f);
 			void				writeDouble(const double& d);
 			void				writeBytes(const ByteArray& inBytes, size_t offset = 0, size_t length = 0);
 			void				writeObject(const void* inBuff, size_t length);
-			template <typename T> ByteArray& operator<<(const T& val);
+			ByteArray&			operator<<(const char& val);
+			ByteArray&			operator<<(const unsigned char& val);
+			ByteArray&			operator<<(const short& val);
+			ByteArray&			operator<<(const unsigned short& val);
+			ByteArray&			operator<<(const int& val);
+			ByteArray&			operator<<(const unsigned int& val);
+			ByteArray&			operator<<(const long long& val);
+			ByteArray&			operator<<(const unsigned long long& val);
+			ByteArray&			operator<<(const float& val);
+			ByteArray&			operator<<(const double& val);
 			template <typename T> ByteArray& writeType(const T& val);
 
 		private:

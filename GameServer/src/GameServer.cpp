@@ -1,4 +1,5 @@
 #include "GameServer.h"
+#include "WebsocketClient.h"
 #include "ConsoleClient.h"
 #include <openssl/evp.h>
 
@@ -91,7 +92,7 @@ void GameServer::update()
 
 ClientSocket* GameServer::createClient()
 {
-	return new Client;
+	return new WebsocketClient;
 }
 
 void GameServer::destroyClient(ClientSocket* cs)

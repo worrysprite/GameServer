@@ -1,5 +1,6 @@
 #include "String.h"
 #include <string.h>
+#include <ctype.h>
 
 namespace ws
 {
@@ -35,6 +36,24 @@ namespace ws
 				}
 			}
 			output.push_back(std::string(ptr));
+		}
+
+		void String::toLowercase(char* str)
+		{
+			while (*str != '\0')
+			{
+				*str = tolower(*str);
+				++str;
+			}
+		}
+
+		void String::toUppercase(char* str)
+		{
+			while (*str != '\0')
+			{
+				*str = toupper(*str);
+				++str;
+			}
 		}
 
 	}

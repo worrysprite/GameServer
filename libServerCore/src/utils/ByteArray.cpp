@@ -83,6 +83,12 @@ namespace ws
 				return 0;
 		}
 
+		long long ByteArray::readInt64()
+		{
+			READ_TYPE(long long, position, contentSize, pBytes)
+				return 0;
+		}
+
 		unsigned long long ByteArray::readUnsignedInt64()
 		{
 			READ_TYPE(unsigned long long, position, contentSize, pBytes)
@@ -110,6 +116,10 @@ namespace ws
 			if (length > 0)
 			{
 				outBytes.resize(length);
+				if (offset + length > outBytes.contentSize)
+				{
+					outBytes.contentSize = offset + length;
+				}
 				void* pDst = (void*)((intptr_t)outBytes.pBytes + offset);
 				void* pSrc = (void*)((intptr_t)pBytes + position);
 				memcpy(pDst, pSrc, length);
@@ -150,8 +160,52 @@ namespace ws
 			return std::string();
 		}
 
-		template <typename T>
-		ByteArray& ws::utils::ByteArray::operator>>(T& val)
+		ByteArray& ByteArray::operator>>(char& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(unsigned char& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(short& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(unsigned short& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(int& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(unsigned int& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(long long& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(unsigned long long& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(float& val)
+		{
+			return readType(val);
+		}
+
+		ByteArray& ByteArray::operator>>(double& val)
 		{
 			return readType(val);
 		}
@@ -182,8 +236,52 @@ namespace ws
 			}
 		}
 
-		template <typename T>
-		ByteArray& ws::utils::ByteArray::operator<<(const T& val)
+		ByteArray& ByteArray::operator<<(const char& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const unsigned char& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const short& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const unsigned short& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const int& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const unsigned int& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const long long& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const unsigned long long& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const float& val)
+		{
+			return writeType(val);
+		}
+
+		ByteArray& ByteArray::operator<<(const double& val)
 		{
 			return writeType(val);
 		}
@@ -199,11 +297,6 @@ namespace ws
 				contentSize = position;
 			}
 			return *this;
-		}
-
-		void ByteArray::writeBoolean(const bool& b)
-		{
-			writeType(b);
 		}
 
 		void ByteArray::writeByte(const char& b)
@@ -236,9 +329,14 @@ namespace ws
 			writeType(i);
 		}
 
-		void ByteArray::writeUnsignedInt64(const unsigned long long& ll)
+		void ByteArray::writeInt64(const long long& ll)
 		{
 			writeType(ll);
+		}
+
+		void ByteArray::writeUnsignedInt64(const unsigned long long& ull)
+		{
+			writeType(ull);
 		}
 
 		void ByteArray::writeFloat(const float& f)

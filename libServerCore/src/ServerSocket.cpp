@@ -24,7 +24,6 @@ namespace ws
 	void ClientSocket::send(const char* data, size_t length)
 	{
 		writeBuffer->lock();
-		writeBuffer->position = writeBuffer->getSize();
 		writeBuffer->writeObject(data, length);
 		writeBuffer->unlock();
 	}
@@ -33,7 +32,6 @@ namespace ws
 	void ClientSocket::send(const ByteArray& packet)
 	{
 		writeBuffer->lock();
-		writeBuffer->position = writeBuffer->getSize();
 		writeBuffer->writeBytes(packet);
 		writeBuffer->unlock();
 	}

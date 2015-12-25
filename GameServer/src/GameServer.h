@@ -3,7 +3,6 @@
 
 #include "ServerSocket.h"
 #include "Database.h"
-#include "Client.h"
 #include "utils/Timer.h"
 
 using namespace ws;
