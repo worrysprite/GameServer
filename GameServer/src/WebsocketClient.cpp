@@ -252,7 +252,7 @@ void WebsocketClient::handleMessage(ByteArray& data)
 	frame.pack(*writeBuffer);
 	writeBuffer->unlock();
 	flush();
-	delete str;
+	delete[] str;
 }
 
 WebsocketFrame::WebsocketFrame() :isFinalFragment(true), unpackStep(NEW_FRAME), type(FRAGMENT_FRAME), isMasked(false), maskKey(0), payloadLength(0)
