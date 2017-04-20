@@ -9,9 +9,12 @@
 #include <vector>
 #include <thread>
 #include <memory>
+#include "utils/ByteArray.h"
 
 namespace ws
 {
+	using namespace utils;
+
 	class Database;
 
 	struct MYSQL_CONFIG
@@ -43,6 +46,8 @@ namespace ws
 		DBStatement& operator<<(uint64_t& value);
 		DBStatement& operator<<(float& value);
 		DBStatement& operator<<(double& value);
+		DBStatement& operator<<(const std::string& value);
+		DBStatement& operator<<(ByteArray& value);
 		DBStatement& bindString(const char* value, unsigned long* length);
 		void bindBlob(enum_field_types type, void* data, unsigned long* size);
 
@@ -59,7 +64,7 @@ namespace ws
 		DBStatement& operator>>(float& value);
 		DBStatement& operator>>(double& value);
 		DBStatement& operator>>(std::string& value);
-
+		DBStatement& operator>>(ByteArray& value);
 		void* getBlob(unsigned long& datasize);
 
 		bool execute();
@@ -85,6 +90,7 @@ namespace ws
 		MYSQL_BIND*		paramBind;
 		MYSQL_BIND*		resultBind;
 		MYSQL_RES*		resultMetadata;
+		void**			paramsBuffer;
 	};
 
 	class Recordset
@@ -105,6 +111,7 @@ namespace ws
 		Recordset& operator >> (float& value);
 		Recordset& operator >> (double& value);
 		Recordset& operator >> (std::string& value);
+		Recordset& operator >> (ByteArray& value);
 		void*				getBlob(unsigned long& datasize);
 
 	protected:
@@ -131,8 +138,12 @@ namespace ws
 	{
 	public:
 		Database();
+		Database(int _id) :id(_id){}
 		virtual ~Database();
-
+		
+		/************************************************************************/
+		/* init db connection                                                   */
+		/************************************************************************/
 		void setDBConfig(const MYSQL_CONFIG& config);
 		bool logon();
 		void logoff();
@@ -142,14 +153,26 @@ namespace ws
 			if (mysql == NULL) return false;
 			return (mysql_ping(mysql) == 0);
 		}
+		/************************************************************************/
+		/* return num affected rows of query                                    */
+		/************************************************************************/
 		inline my_ulonglong				getAffectedRows() { return numAffectedRows; };
+		/************************************************************************/
+		/* return num result rows of query                                      */
+		/************************************************************************/
 		inline my_ulonglong				getResultRows() { return numResultRows; };
+		/************************************************************************/
+		/* return last insert id of query                                       */
+		/************************************************************************/
 		inline my_ulonglong				getInsertId()
 		{
 			if (mysql == NULL) return 0;
 			return mysql_insert_id(mysql);
 		}
 
+		/************************************************************************/
+		/* prepare a statement for query                                        */
+		/************************************************************************/
 		DBStatement*					prepare(const char* strSQL);
 		void							release(DBStatement* dbStmt);
 		PtrDBRecord						query(const char* strSQL, int nCommit = 1);
@@ -161,6 +184,7 @@ namespace ws
 		my_ulonglong						numResultRows;
 		typedef std::list<DBStatement*>		StmtPool;
 		std::map<std::string, StmtPool*>	stmtCache;
+		int									id;
 	};
 
 	class DBQueue
@@ -178,7 +202,7 @@ namespace ws
 		typedef std::list<PtrDBRequest> DBRequestList;
 		PtrDBRequest		getRequest();
 		void				finishRequest(PtrDBRequest request);
-		void				DBWorkThread();
+		void				DBWorkThread(int id);
 
 		MYSQL_CONFIG				config;
 		std::mutex					workMtx;

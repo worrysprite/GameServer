@@ -1,14 +1,17 @@
 #ifndef __WS_SERVER_SOCKET_H__
 #define __WS_SERVER_SOCKET_H__
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <WinSock2.h>
 #include <Windows.h>
 #include <MSWSock.h>
+#include <WS2tcpip.h>
 #pragma comment(lib, "Ws2_32.lib")		// win32 Socket lib
 #pragma comment(lib, "Kernel32.lib")	// IOCP lib
+#ifndef Socket
 typedef SOCKET Socket;
-#elif LINUX
+#endif
+#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
@@ -17,7 +20,9 @@ typedef SOCKET Socket;
 #include <strings.h>
 #include <unistd.h>
 #define EPOLL_SIZE 1000
+#ifndef Socket
 typedef int Socket;
+#endif
 #endif
 
 #include <assert.h>
@@ -41,73 +46,84 @@ typedef int Socket;
 namespace ws
 {
 	using namespace utils;
+	using namespace std::chrono;
 
 	class ServerSocket;
-	class ClientSocket
+	class Client
 	{
 		friend class ServerSocket;
 	public:
-		ClientSocket();
-		virtual ~ClientSocket();
+		Client();
+		virtual ~Client();
 
-		long long				id;
-		std::chrono::steady_clock::time_point lastActiveTime;
+		long long					id;
+		unsigned long long			lastActiveTime;
 
-		char*			getIP() { return inet_ntoa(addr.sin_addr); }
+		std::string		getIP()
+		{
+			char buffer[20] = {0};
+			std::string result(inet_ntop(AF_INET, (void*)&addr.sin_addr, buffer, 20));
+			return result;
+		}
 		virtual void	onRecv() = 0;
+		virtual void	onDisconnected(){}
+		virtual void	update(){}
 		virtual void	send(const char* data, size_t length);
 		virtual void	send(const ByteArray& packet);
-		virtual void	flush();
+		inline void		kick(){ isClosing = true; }
 
 	protected:
-		bool					isClosing;
-		bool					isUpdate;
 		Socket					socket;
 		sockaddr_in				addr;
 		ServerSocket*			server;
 		ByteArray*				readBuffer;
 		ByteArray*				writeBuffer;
+	private:
+		bool					isClosing;
+		bool					hasData;
 	};
 
 	struct ServerConfig
 	{
+		ServerConfig() :listenPort(0), maxConnection(0), numIOCPThreads(0), kickTime(0){}
 		unsigned short							listenPort;
 		unsigned int							maxConnection;
 		unsigned char							numIOCPThreads;
-		std::chrono::minutes					kickTime;
-		std::function<ClientSocket*()>			createClient;
-		std::function<void(ClientSocket*)>		destroyClient;
+		unsigned long long						kickTime;
+		std::function<Client*()>				createClient;
+		std::function<void(Client*)>			destroyClient;
 	};
 
 	class ServerSocket
 	{
-		friend class ClientSocket;
+		friend class Client;
 	public:
 		ServerSocket(const ServerConfig& cfg);
 		virtual ~ServerSocket();
 
-		int					startListen();
-		void				update();
-		void				kickClient(long long clientID);
-		ClientSocket*		getClient(long long clientID);
-		size_t				numOnlines();
+		int											startListen();
+		void										update();
+		bool										kickClient(long long clientID);
+		Client*										getClient(long long clientID);
+		const std::map<long long, Client*>&			getAllClients() const { return allClients; }
+		size_t										numOnlines();
 		
 	private:
-		ServerConfig							config;
-		long long								nextClientID;
-		size_t									numClients;
-		Socket									listenSocket;
-		std::mutex								addMtx;
-		std::map<long long, ClientSocket*>		addingClients;
-		std::map<long long, ClientSocket*>		allClients;
+		ServerConfig								config;
+		long long									nextClientID;
+		size_t										numClients;
+		Socket										listenSocket;
+		std::mutex									addMtx;
+		std::map<long long, Client*>				addingClients;
+		std::map<long long, Client*>				allClients;
 		
-		int					processEventThread();
-		void				writeClientBuffer(ClientSocket* client, char* data, size_t size);
-		ClientSocket*		addClient(Socket client, const sockaddr_in &addr);
-		void				destroyClient(ClientSocket* client);
-		void				flushClient(ClientSocket* client);
+		int							processEventThread();
+		void						writeClientBuffer(Client* client, char* data, size_t size);
+		Client*						addClient(Socket client, const sockaddr_in &addr);
+		void						destroyClient(Client* client);
+		void						flushClient(Client* client);
 
-#ifdef WIN32
+#ifdef _WIN32
 	public:
 		inline size_t getIODataPoolSize(){ return ioDataPoolSize; }
 		inline size_t getIODataPostedSize(){ return ioDataPostedSize; }
@@ -138,7 +154,6 @@ namespace ws
 		size_t ioDataPoolSize;
 		size_t ioDataPostedSize;
 		std::list<std::thread*> eventThreads;
-		static bool isInitWinsock;
 
 		int initWinsock();
 		int postAcceptEx();
@@ -149,14 +164,15 @@ namespace ws
 		void releaseOverlappedData(OverlappedData* data);
 		void initOverlappedData(OverlappedData& data, SocketOperation operation, size_t size = BUFFER_SIZE, Socket client = NULL);
 
-#elif LINUX
+#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)
 	private:
-		int epfd;
+		int epfd, pipe_fd[2];
 		bool isExit;
 		std::thread* eventThread;
 
-		void readIntoBuffer(ClientSocket* client);
-		void writeFromBuffer(ClientSocket* client);
+		void readIntoBuffer(Client* client);
+		void writeFromBuffer(Client* client);
+		unsigned long long GetTickCount64();
 #endif
 	};
 }

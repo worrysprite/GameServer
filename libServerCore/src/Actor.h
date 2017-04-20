@@ -22,12 +22,12 @@ namespace ws
 		virtual ~Actor();
 
 		virtual void sendEvent(std::shared_ptr<const ActorEvent> evt);
+		virtual void update();
 
 	protected:
 		std::mutex evtLock;
 		std::list<std::shared_ptr<const ActorEvent>> eventList;
 
-		virtual void update();
 		virtual void processEvent(const ActorEvent* evt);
 	};
 

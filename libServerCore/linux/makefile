@@ -3,31 +3,34 @@ ProjectDir = ..
 DebugDir = ./Debug
 SrcDir = $(ProjectDir)/src
 
-DEBUG = -g3 -O0
-CC = g++
-CC_FLAGS = -DLINUX=1 -std=c++11
+DEBUG = -g3 -O0 -ggdb -rdynamic
+CC = ccache g++
+CC_FLAGS = -std=c++11 -fstack-protector-all
 
-INC = -I$(SrcDir) -I/usr/include/mysql
+INC = -I$(SrcDir) -I/usr/local/mysql/include
 LIB = 
 
+SubDir = utils
+SRC_PATH = $(SrcDir)
+SRC_PATH += $(addprefix $(SrcDir)/, $(SubDir))
+SOURCES = $(wildcard $(addsuffix /*.cpp, $(SRC_PATH)))
+
+ObjDir = $(DebugDir)
+ObjDir += $(addprefix $(DebugDir)/, $(SubDir))
+
 TARGET = libServerCore.a
-SOURCES = $(wildcard $(SrcDir)/*.cpp) \
-		  $(wildcard $(SrcDir)/utils/*.cpp)
 OBJECTS = $(patsubst $(SrcDir)/%.cpp,%.o,$(SOURCES))
 
-OutputDir =
-ifneq ($(DebugDir), $(wildcard $(DebugDir)))
-	OutputDir := Debug
-	OutputDir := Debug/utils
-endif
-
-$(TARGET) : $(OBJECTS)
-	ar rv $(DebugDir)/$(TARGET) $(addprefix $(DebugDir)/,$?)
+$(TARGET) : $(ObjDir) $(OBJECTS)
+	ar rv $(DebugDir)/$(TARGET) $(addprefix $(DebugDir)/,$(OBJECTS))
 
 $(OBJECTS) : %.o : $(SrcDir)/%.cpp
 	$(CC) $(DEBUG) $(INC) -c $(CC_FLAGS) $< -o $(DebugDir)/$@
 
+$(ObjDir) :
+	-mkdir $@
+
 .PRONY : clean
 clean:
-	-rm -rf $(DebugDir)/*
+	-rm -rf $(DebugDir)
 

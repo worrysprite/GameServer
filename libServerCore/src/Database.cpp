@@ -142,6 +142,30 @@ namespace ws
 		return *this;
 	}
 
+	Recordset& Recordset::operator>>(ByteArray& value)
+	{
+		if (mysqlRow && fieldIndex < numFields)
+		{
+			MYSQL_FIELD* field = mysql_fetch_field_direct(mysqlRes, fieldIndex);
+			if (IS_BLOB(field->type))
+			{
+				unsigned long datasize = field->max_length;
+				if (datasize > 0)
+				{
+					const char* szRow = mysqlRow[fieldIndex++];
+					size_t oldpos = value.position;
+					value.writeObject(szRow, datasize);
+					value.position = oldpos;
+				}
+			}
+		}
+		else
+		{
+			Log::e("mysql fetch field out of range!");
+		}
+		return *this;
+	}
+
 	template<typename T>
 	Recordset& Recordset::getInt(T& value)
 	{
@@ -187,7 +211,7 @@ namespace ws
 //===================== MysqlStatement Implements ========================
 
 	DBStatement::DBStatement(const char* sql, MYSQL_STMT* mysql_stmt) :
-		_strSQL(sql), stmt(mysql_stmt), paramBind(nullptr), paramIndex(0), _numParams(0), 
+		_strSQL(sql), stmt(mysql_stmt), paramBind(nullptr), paramIndex(0), _numParams(0), paramsBuffer(nullptr),
 		_numResultFields(0), resultBind(nullptr), resultMetadata(nullptr), _numRows(0), _lastInsertId(0)
 	{
 		// bind params
@@ -196,6 +220,8 @@ namespace ws
 		{
 			paramBind = new MYSQL_BIND[_numParams];
 			memset(paramBind, 0, sizeof(MYSQL_BIND)* _numParams);
+			paramsBuffer = new void*[_numParams];
+			memset(paramsBuffer, 0, sizeof(void*)* _numParams);
 		}
 
 		// bind result
@@ -239,6 +265,7 @@ namespace ws
 					buffer_length = fields[i].length;
 					break;
 				}
+				resultBind[i].is_unsigned = (fields[i].flags & UNSIGNED_FLAG) > 0;
 				resultBind[i].buffer = malloc(buffer_length);
 				resultBind[i].buffer_length = buffer_length;
 				resultBind[i].is_null = new my_bool(0);
@@ -257,6 +284,15 @@ namespace ws
 		{
 			delete[] paramBind;
 			paramBind = nullptr;
+		}
+		if (paramsBuffer)
+		{
+			for (int i = 0; i < _numParams; ++i)
+			{
+				free(paramsBuffer[i]);
+			}
+			delete[] paramsBuffer;
+			paramsBuffer = nullptr;
 		}
 		if (resultBind)
 		{
@@ -344,6 +380,46 @@ namespace ws
 		return bindNumberParam(value, MYSQL_TYPE_DOUBLE, false);
 	}
 
+	DBStatement& DBStatement::operator<<(const std::string& value)
+	{
+		if (paramIndex < _numParams)
+		{
+			MYSQL_BIND& b = paramBind[paramIndex];
+			b.buffer_type = MYSQL_TYPE_VAR_STRING;
+			b.buffer = malloc(value.size());
+			memcpy(b.buffer, value.data(), value.size());
+			paramsBuffer[paramIndex] = b.buffer;
+			b.buffer_length = (unsigned long)value.size();
+			b.length = &b.buffer_length;
+			++paramIndex;
+		}
+		else
+		{
+			Log::e("mysql bind params out of range!");
+		}
+		return *this;
+	}
+
+	DBStatement& DBStatement::operator<<(ByteArray& value)
+	{
+		if (paramIndex < _numParams)
+		{
+			MYSQL_BIND& b = paramBind[paramIndex];
+			b.buffer_type = MYSQL_TYPE_BLOB;
+			b.buffer = malloc(value.getSize());
+			memcpy(b.buffer, value.getBytes(), value.getSize());
+			paramsBuffer[paramIndex] = b.buffer;
+			b.buffer_length = (unsigned long)value.getSize();
+			b.length = &b.buffer_length;
+			++paramIndex;
+		}
+		else
+		{
+			Log::e("mysql bind params out of range!");
+		}
+		return *this;
+	}
+
 	DBStatement& DBStatement::bindString(const char* value, unsigned long* length)
 	{
 		if (paramIndex < _numParams)
@@ -367,10 +443,17 @@ namespace ws
 		if (paramIndex < _numParams)
 		{
 			MYSQL_BIND& b = paramBind[paramIndex];
-			b.buffer_type = type;
-			b.buffer = data;
-			b.buffer_length = *size;
-			b.length = size;
+			if (data)
+			{
+				b.buffer_type = type;
+				b.buffer = data;
+				b.buffer_length = *size;
+				b.length = size;
+			}
+			else
+			{
+				b.buffer_type = MYSQL_TYPE_NULL;
+			}
 			++paramIndex;
 		}
 		else
@@ -420,7 +503,7 @@ namespace ws
 		case MYSQL_NO_DATA:
 			return false;
 		case MYSQL_DATA_TRUNCATED:
-			Log::w("mysql fetch truncated!");
+			Log::w("mysql fetch truncated! sql=%s", strSQL());
 			return true;
 		default:
 			Log::e("mysql fetch error: %s", mysql_stmt_error(stmt));
@@ -431,6 +514,11 @@ namespace ws
 	void DBStatement::reset()
 	{
 		memset(paramBind, 0, sizeof(MYSQL_BIND)* _numParams);
+		for (int i = 0; i < _numParams; ++i)
+		{
+			free(paramsBuffer[i]);
+			paramsBuffer[i] = nullptr;
+		}
 		for (int i = 0; i < _numResultFields; ++i)
 		{
 			memset(resultBind[i].buffer, 0, resultBind[i].buffer_length);
@@ -537,6 +625,29 @@ namespace ws
 		return *this;
 	}
 
+	DBStatement& DBStatement::operator>>(ByteArray& value)
+	{
+		if (resultIndex < _numResultFields)
+		{
+			if (*resultBind[resultIndex].is_null)
+			{
+				value.truncate();
+			}
+			else
+			{
+				size_t oldpos = value.position;
+				value.writeObject(resultBind[resultIndex].buffer, *resultBind[resultIndex].length);
+				value.position = oldpos;
+			}
+			++resultIndex;
+		}
+		else
+		{
+			Log::e("mysql get result out of range!");
+		}
+		return *this;
+	}
+
 	void* DBStatement::getBlob(unsigned long& datasize)
 	{
 		datasize = *resultBind[resultIndex].length;
@@ -585,7 +696,7 @@ namespace ws
 
 		MYSQL* pMysql = mysql_real_connect(mysql, dbConfig.strHost.c_str(),
 			dbConfig.strUser.c_str(), dbConfig.strPassword.c_str(),
-			dbConfig.strDB.c_str(), dbConfig.nPort, dbConfig.strUnixSock.c_str(), CLIENT_MULTI_RESULTS);
+			dbConfig.strDB.c_str(), dbConfig.nPort, dbConfig.strUnixSock.c_str(), CLIENT_MULTI_STATEMENTS | CLIENT_MULTI_RESULTS);
 
 		if (pMysql)
 		{
@@ -734,7 +845,7 @@ namespace ws
 		this->config = config;
 		for (int i = 0; i < nThread; i++)
 		{
-			std::thread* th(new std::thread(std::bind(&DBQueue::DBWorkThread, this)));
+			std::thread* th(new std::thread(std::bind(&DBQueue::DBWorkThread, this, i)));
 			workerThreads.push_back(th);
 		}
 	}
@@ -784,9 +895,9 @@ namespace ws
 		finishMtx.unlock();
 	}
 
-	void DBQueue::DBWorkThread()
+	void DBQueue::DBWorkThread(int id)
 	{
-		Database db;
+		Database db(id);
 		db.setDBConfig(config);
 		PtrDBRequest request;
 		const std::chrono::milliseconds requestWait(50);

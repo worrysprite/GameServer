@@ -14,20 +14,19 @@ namespace ws
 		int				type;
 	};
 
+	typedef std::function<void(const Event&)> EventCallback;
+
 	class EventDispatcher
 	{
 	public:
-		typedef void(*EventCallback)(const Event&);
-		//typedef std::function<void(const Event&)> EventCallback;
-
 		EventDispatcher();
-		~EventDispatcher();
+		virtual ~EventDispatcher();
 
-		void	addEventListener(int type, EventCallback callback);
-		void	removeEventListener(int type, EventCallback callback);
-		void	dispatchEvent(const Event& event);
+		virtual void	addEventListener(int type, EventCallback* callback);
+		virtual void	removeEventListener(int type, EventCallback* callback);
+		virtual void	dispatchEvent(const Event& event);
 	protected:
-		std::map<int, std::set<EventCallback>>		listeners;
+		std::map<int, std::set<EventCallback*>>			listeners;
 	};
 }
 

@@ -6,6 +6,8 @@
 #include <mutex>
 #include <set>
 #include <list>
+#include <memory>
+#include "Log.h"
 
 using namespace std::chrono;
 
@@ -23,10 +25,10 @@ namespace ws
 			Schedule() :repeat(0) {}
 			virtual ~Schedule(){}
 
-			time_point<ClockType>		lastTime;
-			milliseconds				interval;
-			unsigned int				repeat;
-			CallbackType				callback;
+			time_point<ClockType>			lastTime;
+			milliseconds					interval;
+			unsigned int					repeat;
+			std::shared_ptr<CallbackType>	callback;
 		};
 
 		//=======================Timer implements========================
@@ -63,7 +65,7 @@ namespace ws
 				}
 			}
 
-			ScheduleType*	addTimeCall(milliseconds time, CallbackType callback,
+			ScheduleType*	addTimeCall(milliseconds time, const CallbackType& callback,
 					unsigned int repeat = 0xFFFFFFFF, milliseconds delay = milliseconds(0))
 			{
 				if (!callback)
@@ -72,15 +74,15 @@ namespace ws
 				}
 				ScheduleType* schedule = new ScheduleType;
 				schedule->interval = time;
-				schedule->callback = callback;
+				schedule->callback = std::shared_ptr<CallbackType>(new CallbackType(callback));
 				schedule->repeat = repeat;
 				schedule->lastTime = ClockType::now() + delay;
 				scheduleMtx.lock();
-				if (time >= bigInterval)
+				if (time >= bigInterval && schedule->lastTime + time > bigLastCheck + bigInterval)
 				{
 					bigScheduleList.insert(schedule);
 				}
-				else if (time >= mediumInterval)
+				else if (time >= mediumInterval && schedule->lastTime + time > mediumLastCheck + mediumInterval)
 				{
 					mediumScheduleList.insert(schedule);
 				}
@@ -111,22 +113,21 @@ namespace ws
 				{
 					Log::e("fatal error! removeTimeCall got a removed schedule");
 				}
-				else
-				{
-					Log::e("fatal error! schedule list in timer has overlapped object");
-				}
 				scheduleMtx.unlock();
+				callbackMtx.lock();
+				callbackList.remove(schedule->callback);
+				callbackMtx.unlock();
 			}
 
 			void update()
 			{
-				std::list<CallbackType> tmpList;
+				std::list<std::shared_ptr<CallbackType>> tmpList;
 				callbackMtx.lock();
 				callbackList.swap(tmpList);
 				callbackMtx.unlock();
-				for (CallbackType& callback : tmpList)
+				for (auto &callback : tmpList)
 				{
-					callback();
+					(*callback)();
 				}
 				std::set<ScheduleType*> tmpRemoveList;
 				scheduleMtx.lock();
@@ -139,20 +140,20 @@ namespace ws
 			}
 
 		protected:
-			bool							isExit;
-			std::thread*					timerThread;
-			std::mutex						scheduleMtx;
-			std::set<ScheduleType*>			scheduleList;
-			std::set<ScheduleType*>			mediumScheduleList;
-			std::set<ScheduleType*>			bigScheduleList;
-			std::set<ScheduleType*>			removeList;
-			std::mutex						callbackMtx;
-			std::list<CallbackType>			callbackList;
+			bool										isExit;
+			std::thread*								timerThread;
+			std::mutex									scheduleMtx;
+			std::set<ScheduleType*>						scheduleList;
+			std::set<ScheduleType*>						mediumScheduleList;
+			std::set<ScheduleType*>						bigScheduleList;
+			std::set<ScheduleType*>						removeList;
+			std::mutex									callbackMtx;
+			std::list<std::shared_ptr<CallbackType>>	callbackList;
 
-			milliseconds					mediumInterval;
-			milliseconds					bigInterval;
-			time_point<ClockType>			mediumLastCheck;		//中间隔计时上次触发时间
-			time_point<ClockType>			bigLastCheck;			//大间隔计时上次触发时间
+			milliseconds								mediumInterval;
+			milliseconds								bigInterval;
+			time_point<ClockType>						mediumLastCheck;		//中间隔计时上次触发时间
+			time_point<ClockType>						bigLastCheck;			//大间隔计时上次触发时间
 
 			void timerProc()
 			{
@@ -235,7 +236,6 @@ namespace ws
 						}
 						if (isFinished)
 						{
-							Log::d("time's up! pointer=%16X, interval=%d, repeat=%d", (intptr_t)schedule, schedule->interval.count(), schedule->repeat);
 							iter = scheduleList.erase(iter);
 							removeList.insert(schedule);
 						}

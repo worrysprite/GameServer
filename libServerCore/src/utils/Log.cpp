@@ -1,4 +1,5 @@
 #include "Log.h"
+#include "utils/String.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -65,20 +66,11 @@ namespace ws
 			}
 		}
 
-		void Log::getTime(char pout[CTIME_SIZE])
-		{
-			time_t t(time(NULL));
-			char* time = ctime(&t);
-			memcpy(pout, time, CTIME_SIZE - 1);
-			pout[CTIME_SIZE - 1] = '\0';
-		}
-
 		void Log::printOut(const char* level, const char* format, va_list valist)
 		{
-			char time[CTIME_SIZE];
-			getTime(time);
+			std::string timeStr(String::formatTime());
 			char buffer[1024] = {0};
-			sprintf(buffer, "%s %s %s\n", time, level, format);
+			sprintf(buffer, "%s %s %s\n", timeStr.c_str(), level, format);
 			vprintf(buffer, valist);
 			fflush(stdout);
 		}

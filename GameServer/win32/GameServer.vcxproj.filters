@@ -10,99 +10,69 @@
     <Filter Include="src\database">
       <UniqueIdentifier>{ed909891-866d-4c82-8b77-38378458af5c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="src\console">
-      <UniqueIdentifier>{03e1577e-7bb3-406b-85b8-2836006a8549}</UniqueIdentifier>
+    <Filter Include="src\network">
+      <UniqueIdentifier>{91c2b063-1eb8-407d-9e89-acb25f99f3ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\upgrade">
+      <UniqueIdentifier>{718f0364-c322-4dfb-9b3f-06dd8de94ec1}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Client.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Message.cpp">
+    <ClCompile Include="..\src\network\WebsocketClient.cpp">
+      <Filter>src\network</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\GlobalData.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gameLogic\ActivationCode.cpp">
+    <ClCompile Include="..\src\upgrade\Upgrader.cpp">
+      <Filter>src\upgrade</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gameLogic\UserLogin.cpp">
       <Filter>src\gameLogic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\gameLogic\UIControl.cpp">
+    <ClCompile Include="..\src\database\PlayerQuery.cpp">
+      <Filter>src\database</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\gameLogic\PlayerLogic.cpp">
       <Filter>src\gameLogic</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\database\ActivationCodeQuery.cpp">
-      <Filter>src\database</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\database\UIConfigQuery.cpp">
-      <Filter>src\database</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\database\SDKConfigQuery.cpp">
-      <Filter>src\database</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\gameLogic\SDKControl.cpp">
-      <Filter>src\gameLogic</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ConsoleClient.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\GameServer.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\console\ConsoleLogin.cpp">
-      <Filter>src\console</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\database\ConsoleLoginQuery.cpp">
-      <Filter>src\database</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\console\ConsoleProfiler.cpp">
-      <Filter>src\console</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\WebsocketClient.cpp">
-      <Filter>src</Filter>
+    <ClCompile Include="..\src\network\GameServer.cpp">
+      <Filter>src\network</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\Client.h">
+    <ClInclude Include="..\src\network\WebsocketClient.h">
+      <Filter>src\network</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\GlobalData.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Message.h">
+    <ClInclude Include="..\src\GameEvent.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gameLogic\ActivationCode.h">
+    <ClInclude Include="..\src\upgrade\Upgrader.h">
+      <Filter>src\upgrade</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gameLogic\UserLogin.h">
       <Filter>src\gameLogic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\gameLogic\UIControl.h">
+    <ClInclude Include="..\src\database\PlayerQuery.h">
+      <Filter>src\database</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\gameLogic\PlayerLogic.h">
       <Filter>src\gameLogic</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\database\ActivationCodeQuery.h">
-      <Filter>src\database</Filter>
+    <ClInclude Include="..\src\network\Message.h">
+      <Filter>src\network</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\database\UIConfigQuery.h">
-      <Filter>src\database</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\database\SDKConfigQuery.h">
-      <Filter>src\database</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\gameLogic\SDKControl.h">
-      <Filter>src\gameLogic</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\ConsoleClient.h">
+    <ClInclude Include="..\src\DataDefinition.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\GameServer.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\console\ConsoleLogin.h">
-      <Filter>src\console</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\database\ConsoleLoginQuery.h">
-      <Filter>src\database</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\console\ConsoleProfiler.h">
-      <Filter>src\console</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\WebsocketClient.h">
-      <Filter>src</Filter>
+    <ClInclude Include="..\src\network\GameServer.h">
+      <Filter>src\network</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

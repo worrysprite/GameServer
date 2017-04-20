@@ -5,23 +5,24 @@
 
 namespace ws
 {
-	//===================== ClientSocket Implements ========================
+	//===================== Client Implements ========================
 	// socket threads
-	ClientSocket::ClientSocket() : server(nullptr), socket(0), readBuffer(nullptr), isClosing(false), writeBuffer(nullptr), isUpdate(false), id(0)
+	Client::Client() : server(nullptr), socket(0), readBuffer(nullptr),
+		isClosing(false), writeBuffer(nullptr), hasData(false), id(0)
 	{
 		readBuffer = new ByteArray(BUFFER_SIZE);
 		writeBuffer = new ByteArray(BUFFER_SIZE);
 	}
 
 	// socket threads
-	ClientSocket::~ClientSocket()
+	Client::~Client()
 	{
 		delete readBuffer;
 		delete writeBuffer;
 	}
 
 	// main thread
-	void ClientSocket::send(const char* data, size_t length)
+	void Client::send(const char* data, size_t length)
 	{
 		writeBuffer->lock();
 		writeBuffer->writeObject(data, length);
@@ -29,24 +30,18 @@ namespace ws
 	}
 
 	// main thread
-	void ClientSocket::send(const ByteArray& packet)
+	void Client::send(const ByteArray& packet)
 	{
 		writeBuffer->lock();
 		writeBuffer->writeBytes(packet);
 		writeBuffer->unlock();
 	}
 
-	// main thread
-	void ClientSocket::flush()
-	{
-		server->flushClient(this);
-	}
-
-
-#ifdef WIN32 //-----------------------windows implements start-------------------------------
+#ifdef _WIN32 //-----------------------windows implements start-------------------------------
 	// main thread
 	ServerSocket::ServerSocket(const ServerConfig& cfg) :
-		config(cfg), completionPort(nullptr), lpfnAcceptEx(nullptr), nextClientID(0), listenSocket(0), ioDataPoolSize(0), ioDataPostedSize(0)
+		config(cfg), completionPort(nullptr), lpfnAcceptEx(nullptr), nextClientID(0),
+		listenSocket(0), ioDataPoolSize(0), ioDataPostedSize(0)
 	{
 		assert(cfg.createClient != nullptr);
 		assert(cfg.destroyClient != nullptr);
@@ -67,7 +62,14 @@ namespace ws
 			delete th;
 		}
 		eventThreads.clear();
-
+		// disconnect all clients
+		for (auto client : allClients)
+		{
+			client.second->isClosing = true;
+			destroyClient(client.second);
+		}
+		allClients.clear();
+		numClients = 0;
 		// clear all caches
 		for (auto ioData : ioDataPool)
 		{
@@ -75,7 +77,6 @@ namespace ws
 			{
 				closesocket(ioData->acceptSocket);
 			}
-			delete ioData;
 		}
 		for (auto ioData : ioDataPosted)
 		{
@@ -96,7 +97,7 @@ namespace ws
 	{
 		DWORD BytesTransferred;
 		LPOVERLAPPED lpOverlapped;
-		ClientSocket* client = NULL;
+		Client* client = NULL;
 		OverlappedData* ioData = NULL;
 		DWORD numBytes;
 		DWORD Flags = 0;
@@ -110,12 +111,12 @@ namespace ws
 			if (bRet == 0)
 			{
 				DWORD error(GetLastError());
-				Log::e("GetQueuedCompletionStatus Error: %d", error);
 				if (lpOverlapped)
 				{
 					if (ERROR_CONNECTION_ABORTED != error)
 					{
 						client->isClosing = true;
+						Log::e("GetQueuedCompletionStatus Error: %d", error);
 					}
 					releaseOverlappedData(ioData);
 				}
@@ -160,7 +161,7 @@ namespace ws
 						continue;
 					}
 					writeClientBuffer(client, ioData->buffer, BytesTransferred);
-					client->isUpdate = true;
+					client->hasData = true;
 					initOverlappedData(*ioData, SocketOperation::RECEIVE);
 					WSARecv(client->socket, &(ioData->wsabuff), 1, &numBytes, &Flags, &(ioData->overlapped), NULL);
 				}
@@ -192,14 +193,8 @@ namespace ws
 		return 0;
 	}	//end of processEvent
 
-	bool ServerSocket::isInitWinsock = false;
-
 	int ServerSocket::initWinsock()
 	{
-		if (isInitWinsock)
-		{
-			return 0;
-		}
 		WORD wVersionRequested = MAKEWORD(2, 2); // request WinSock lib v2.2
 		WSADATA wsaData;	// Windows Socket info struct
 		DWORD err = WSAStartup(wVersionRequested, &wsaData);
@@ -215,7 +210,6 @@ namespace ws
 			Log::e("Request Windows Socket Version 2.2 Error!");
 			return -1;
 		}
-		isInitWinsock = true;
 		return 0;
 	}
 
@@ -251,7 +245,7 @@ namespace ws
 		}
 
 		// create listen socket
-		listenSocket = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+		listenSocket = WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
 		// bind listen socket to i/o completion port
 		CreateIoCompletionPort((HANDLE)listenSocket, completionPort, (ULONG_PTR)0, 0);
 
@@ -300,17 +294,22 @@ namespace ws
 	}	//end of startListen
 
 	// main thread
-	void ServerSocket::flushClient(ClientSocket* client)
+	void ServerSocket::flushClient(Client* client)
 	{
 		if (!client || client->isClosing)
 		{
 			return;
 		}
+		client->writeBuffer->lock();
+		size_t remain = client->writeBuffer->getSize();
+		if (!remain)
+		{
+			client->writeBuffer->unlock();
+			return;
+		}
 		char buffer[BUFFER_SIZE];
 		memset(buffer, 0, BUFFER_SIZE);
-		client->writeBuffer->lock();
 		client->writeBuffer->position = 0;
-		size_t remain = client->writeBuffer->available();
 		while (remain > 0)
 		{
 			size_t length = client->writeBuffer->readObject(buffer, BUFFER_SIZE);
@@ -365,7 +364,7 @@ namespace ws
 	// main thread and socket threads
 	int ServerSocket::postAcceptEx()
 	{
-		SOCKET acceptSocket = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
+		SOCKET acceptSocket = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, 0, 0, WSA_FLAG_OVERLAPPED);
 		OverlappedData* ioData = createOverlappedData(ACCEPT, BUFFER_SIZE, acceptSocket);
 
 		DWORD dwBytes = 0;
@@ -398,7 +397,7 @@ namespace ws
 			sockaddr* remoteAddr = NULL;
 			int remoteAddrLength;
 			lpfnGetAcceptExSockAddrs(buffer, 0, ADDRESS_LENGTH, ADDRESS_LENGTH, &localAddr, &localAddrLength, &remoteAddr, &remoteAddrLength);
-			memcpy(addr, localAddr, localAddrLength);
+			memcpy(addr, remoteAddr, localAddrLength);
 			return 0;
 		}
 		else
@@ -415,17 +414,18 @@ namespace ws
 	}
 
 	// main thread
-	void ServerSocket::destroyClient(ClientSocket* client)
+	void ServerSocket::destroyClient(Client* client)
 	{
 		shutdown(client->socket, SD_BOTH);
 		closesocket(client->socket);
+		client->onDisconnected();
 		config.destroyClient(client);
 	}
 
-#elif LINUX	//-----------------------linux implements start-------------------------------
+#elif defined(__linux__) || defined(__linux) || defined(linux) || defined(__gnu_linux__)	//-----------------------linux implements start-------------------------------
 	// main thread
 	ServerSocket::ServerSocket(const ServerConfig& cfg) :
-			config(cfg), isExit(false), eventThread(nullptr), epfd(0), nextClientID(0), listenSocket(0)
+		config(cfg), isExit(false), eventThread(nullptr), epfd(0), nextClientID(0), listenSocket(0)
 	{
 		assert(cfg.createClient != nullptr);
 		assert(cfg.destroyClient != nullptr);
@@ -435,10 +435,25 @@ namespace ws
 	{
 		// stop event threads
 		isExit = true;
+		char exitCode[2] = "0";
+		write(pipe_fd[1], exitCode, 2);
 		eventThread->join();
 		Log::d("server socket event thread joined");
 		delete eventThread;
 		eventThread = NULL;
+		close(pipe_fd[0]);
+		close(pipe_fd[1]);
+		// disconnect all clients
+		for (auto client : allClients)
+		{
+			client.second->isClosing = true;
+			destroyClient(client.second);
+		}
+		allClients.clear();
+		numClients = 0;
+		// close listen port
+		shutdown(listenSocket, SHUT_RDWR);
+		close(listenSocket);
 	}
 
 	int ServerSocket::processEventThread()
@@ -448,7 +463,7 @@ namespace ws
 		epoll_event events[EPOLL_SIZE];
 		sockaddr clientAddr;
 		socklen_t addrlen = sizeof(sockaddr);
-		while (true)
+		while (!isExit)
 		{
 			int eventCount = epoll_wait(epfd, events, EPOLL_SIZE, -1);
 			if (eventCount == -1)
@@ -493,20 +508,20 @@ namespace ws
 							}
 						}
 					}
-					else
+					else if (evt.data.fd != pipe_fd[0])
 					{
-						ClientSocket* client = (ClientSocket*)evt.data.ptr;
+						Client* client = (Client*)evt.data.ptr;
 						readIntoBuffer(client);
 					}
 				}
 				if (evt.events & EPOLLOUT)
 				{
-					ClientSocket* client = (ClientSocket*)evt.data.ptr;
+					Client* client = (Client*)evt.data.ptr;
 					writeFromBuffer(client);
 				}
 				if (evt.events & EPOLLRDHUP)
 				{
-					ClientSocket* client = (ClientSocket*)evt.data.ptr;
+					Client* client = (Client*)evt.data.ptr;
 					client->isClosing = true;
 				}
 			}
@@ -552,6 +567,14 @@ namespace ws
 		ev.data.fd = listenSocket;
 		epoll_ctl(epfd, EPOLL_CTL_ADD, listenSocket, &ev);
 
+		if (-1 == pipe(pipe_fd))
+		{
+			Log::e("create pipe error: %s", strerror(errno));
+			return -1;
+		}
+		ev.data.fd = pipe_fd[0];
+		epoll_ctl(epfd, EPOLL_CTL_ADD, pipe_fd[0], &ev);
+
 		// create threads to process epoll events
 		std::function<int()> eventProc(std::bind(&ServerSocket::processEventThread, this));
 		eventThread = new std::thread(eventProc);
@@ -559,13 +582,13 @@ namespace ws
 	}	//end of startListen
 
 	// main thread
-	void ServerSocket::flushClient(ClientSocket* client)
+	void ServerSocket::flushClient(Client* client)
 	{
 		writeFromBuffer(client);
 	}
 
 	// socket thread
-	void ServerSocket::readIntoBuffer(ClientSocket* client)
+	void ServerSocket::readIntoBuffer(Client* client)
 	{
 		if (client->isClosing)
 		{
@@ -592,28 +615,33 @@ namespace ws
 				client->isClosing = true;
 			}
 		}
-		client->isUpdate = true;
+		client->hasData = true;
 	}
 
 	// main thread and socket thread
-	void ServerSocket::writeFromBuffer(ClientSocket* client)
+	void ServerSocket::writeFromBuffer(Client* client)
 	{
 		if (client->isClosing)
 		{
 			return;
 		}
+		client->writeBuffer->lock();
+		size_t remain = client->writeBuffer->getSize();
+		if (!remain)
+		{
+			client->writeBuffer->unlock();
+			return;
+		}
 		char buffer[BUFFER_SIZE];
 		bzero(buffer, BUFFER_SIZE);
-		client->writeBuffer->lock();
 		client->writeBuffer->position = 0;
-		size_t remain = client->writeBuffer->available();
 		while (remain > 0)
 		{
 			size_t length = client->writeBuffer->readObject(buffer, BUFFER_SIZE);
 			long sentLength = send(client->socket, buffer, length, 0);
 			if (sentLength == -1)
 			{
-				if (sentLength == EWOULDBLOCK || sentLength == EAGAIN)
+				if (errno == EWOULDBLOCK || errno == EAGAIN)
 				{
 					client->writeBuffer->position -= length;
 					break;
@@ -641,7 +669,7 @@ namespace ws
 	}
 
 	// main thread
-	void ServerSocket::destroyClient(ClientSocket* client)
+	void ServerSocket::destroyClient(Client* client)
 	{
 		if (-1 == shutdown(client->socket, SHUT_RDWR))
 		{
@@ -651,7 +679,15 @@ namespace ws
 		{
 			Log::e("close socket error: %s", strerror(errno));
 		}
+		client->onDisconnected();
 		config.destroyClient(client);
+	}
+
+	unsigned long long ServerSocket::GetTickCount64()
+	{
+		struct timespec ts;
+		clock_gettime(CLOCK_MONOTONIC, &ts);
+		return (ts.tv_sec * 1000ULL + ts.tv_nsec / 1000000);
 	}
 
 #endif
@@ -669,50 +705,55 @@ namespace ws
 		if (addingClients.size() > 0)
 		{
 			allClients.insert(addingClients.begin(), addingClients.end());
-			Log::d("%d client is connected. online=%d", addingClients.size(), allClients.size());
+			//Log::d("%d client is connected. online=%d", addingClients.size(), allClients.size());
 			addingClients.clear();
 		}
 		addMtx.unlock();
-
-		std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-		int numDisconnected(0);
+		unsigned long long now = GetTickCount64();
+		//int numDisconnected(0);
 		for (auto iter = allClients.begin(); iter != allClients.end();)
 		{
 			auto client = iter->second;
 			if (client->isClosing)
 			{
-				++numDisconnected;
+				//++numDisconnected;
 				iter = allClients.erase(iter);
 				destroyClient(client);
 			}
 			else
 			{
-				if (client->isUpdate)
+				if (client->hasData)
 				{
-					client->isUpdate = false;
+					client->hasData = false;
 					client->lastActiveTime = now;
 					client->onRecv();
 				}
-				else if (now - client->lastActiveTime > config.kickTime)
+				else if (now < client->lastActiveTime)	// GetTickCount was reset after 49.7 days
+				{
+					client->lastActiveTime = now;
+				}
+				else if (config.kickTime && now - client->lastActiveTime > config.kickTime)
 				{
 					client->isClosing = true;
 				}
+				client->update();
+				flushClient(client);
 				++iter;
 			}
 		}
-		if (numDisconnected > 0)
+		/*if (numDisconnected > 0)
 		{
 			Log::d("%d client is disconnected. online=%d", numDisconnected, allClients.size());
-		}
+		}*/
 		numClients = allClients.size();
 	}
 
 	// socket threads
-	ClientSocket* ServerSocket::addClient(Socket client, const sockaddr_in &addr)
+	Client* ServerSocket::addClient(Socket client, const sockaddr_in &addr)
 	{
-		ClientSocket* cs = config.createClient();
+		Client* cs = config.createClient();
 		cs->server = this;
-		cs->lastActiveTime = std::chrono::steady_clock::now();
+		cs->lastActiveTime = GetTickCount64();
 		cs->socket = client;
 		cs->addr = addr;
 
@@ -724,9 +765,9 @@ namespace ws
 	}
 
 	// main thread
-	ClientSocket* ServerSocket::getClient(long long clientID)
+	Client* ServerSocket::getClient(long long clientID)
 	{
-		ClientSocket* cs(nullptr);
+		Client* cs(nullptr);
 		auto iter = allClients.find(clientID);
 		if (iter != allClients.end())
 		{
@@ -736,18 +777,19 @@ namespace ws
 	}
 
 	// main thread
-	void ServerSocket::kickClient(long long clientID)
+	bool ServerSocket::kickClient(long long clientID)
 	{
-		ClientSocket* client = getClient(clientID);
+		Client* client = getClient(clientID);
 		if (!client)
 		{
-			return;
+			return false;
 		}
 		client->isClosing = true;
+		return true;
 	}
 
 	// socket thread
-	void ServerSocket::writeClientBuffer(ClientSocket* client, char* data, size_t size)
+	void ServerSocket::writeClientBuffer(Client* client, char* data, size_t size)
 	{
 		client->readBuffer->lock();
 		size_t oldPosition = client->readBuffer->position;

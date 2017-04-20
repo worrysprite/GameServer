@@ -18,6 +18,9 @@ namespace ws
 			_ERROR_
 		};
 
+		/************************************************************************/
+		/* 打印LOG信息，内容最多1KB                                              */
+		/************************************************************************/
 		class Log
 		{
 		public:
@@ -28,8 +31,6 @@ namespace ws
 			static void i(const char* format, ...);
 			static void w(const char* format, ...);
 			static void e(const char* format, ...);
-
-			static void getTime(char pout[CTIME_SIZE]);
 
 		private:
 			static void printOut(const char* format, const char* level, va_list valist);

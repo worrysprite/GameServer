@@ -20,24 +20,32 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\Actor.cpp" />
+    <ClCompile Include="..\src\ClientSocket.cpp" />
     <ClCompile Include="..\src\Database.cpp" />
+    <ClCompile Include="..\src\Event.cpp" />
+    <ClCompile Include="..\src\HttpClient.cpp" />
     <ClCompile Include="..\src\ServerSocket.cpp" />
     <ClCompile Include="..\src\utils\ByteArray.cpp" />
     <ClCompile Include="..\src\utils\Log.cpp" />
+    <ClCompile Include="..\src\utils\Math.cpp" />
     <ClCompile Include="..\src\utils\Profiler.cpp" />
     <ClCompile Include="..\src\utils\String.cpp" />
-    <ClCompile Include="..\src\utils\Timer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Actor.h" />
+    <ClInclude Include="..\src\ClientSocket.h" />
     <ClInclude Include="..\src\Database.h" />
+    <ClInclude Include="..\src\Event.h" />
+    <ClInclude Include="..\src\HttpClient.h" />
     <ClInclude Include="..\src\ServerSocket.h" />
     <ClInclude Include="..\src\utils\ByteArray.h" />
     <ClInclude Include="..\src\utils\Log.h" />
+    <ClInclude Include="..\src\utils\Math.h" />
     <ClInclude Include="..\src\utils\ObjectPool.h" />
     <ClInclude Include="..\src\utils\Profiler.h" />
     <ClInclude Include="..\src\utils\String.h" />
     <ClInclude Include="..\src\utils\Timer.h" />
+    <ClInclude Include="..\src\utils\TimeTool.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{D4054E0B-9E83-41EF-AB48-A27CAB563070}</ProjectGuid>
@@ -54,7 +62,6 @@
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
@@ -90,10 +97,7 @@
     <IncludePath>E:\mysql-connector\include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\mysql-connector\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>E:\mysql-connector\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\mysql-connector\x64;$(LibraryPath)</LibraryPath>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>E:\mysql-connector\include;$(IncludePath)</IncludePath>
     <LibraryPath>E:\mysql-connector\x86;$(LibraryPath)</LibraryPath>
@@ -128,6 +132,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(SolutionDir)mysql-connector\include;$(SolutionDir)openssl\include;$(SolutionDir)curl-7.47.1\include;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -136,7 +141,7 @@
       <AdditionalDependencies>libmysql.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Lib>
     <Lib>
-      <AdditionalLibraryDirectories>$(ProjectDir)mysql\lib_x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)mysql-connector\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <ProjectReference>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>

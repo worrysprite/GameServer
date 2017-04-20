@@ -33,7 +33,6 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
-    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -69,13 +68,10 @@
     <LibraryPath>E:\mysql-connector\x86;$(LibraryPath)</LibraryPath>
     <IncludePath>E:\mysql-connector\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LibraryPath>E:\mysql-connector\x64;E:\usr\local\ssl\lib;$(LibraryPath)</LibraryPath>
-    <IncludePath>E:\mysql-connector\include;E:\usr\local\ssl\include;$(IncludePath)</IncludePath>
-  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>E:\mysql-connector\include;$(IncludePath)</IncludePath>
-    <LibraryPath>E:\mysql-connector\x64;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\mysql-connector\include;E:\usr\local\ssl\include;E:\GitHub\rapidjson\include;E:\curl-7.47.1\include;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\mysql-connector\x64;E:\usr\local\ssl\lib;E:\curl-7.47.1\build\Win64\VC12\DLL Debug - DLL OpenSSL - DLL LibSSH2;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <IncludePath>E:\mysql-connector\include;$(IncludePath)</IncludePath>
@@ -99,12 +95,15 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)libServerCore\src;$(ProjectDir)..\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src;$(SolutionDir)libServerCore\src;$(SolutionDir)mysql-connector\include;$(SolutionDir)openssl\include;$(SolutionDir)curl-7.47.1\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32_LEAN_AND_MEAN;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>libmysql.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>libmysql.lib;libeay32.lib;ssleay32.lib;libcurld.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)mysql-connector\x64;$(SolutionDir)openssl\lib;$(SolutionDir)curl-7.47.1\build\Win64\VC12\DLL Debug - DLL OpenSSL - DLL LibSSH2;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <Version>
+      </Version>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -145,37 +144,26 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\Client.cpp" />
-    <ClCompile Include="..\src\ConsoleClient.cpp" />
-    <ClCompile Include="..\src\console\ConsoleLogin.cpp" />
-    <ClCompile Include="..\src\console\ConsoleProfiler.cpp" />
-    <ClCompile Include="..\src\database\ActivationCodeQuery.cpp" />
-    <ClCompile Include="..\src\database\ConsoleLoginQuery.cpp" />
-    <ClCompile Include="..\src\database\SDKConfigQuery.cpp" />
-    <ClCompile Include="..\src\database\UIConfigQuery.cpp" />
-    <ClCompile Include="..\src\gameLogic\ActivationCode.cpp" />
-    <ClCompile Include="..\src\gameLogic\SDKControl.cpp" />
-    <ClCompile Include="..\src\gameLogic\UIControl.cpp" />
-    <ClCompile Include="..\src\GameServer.cpp" />
+    <ClCompile Include="..\src\database\PlayerQuery.cpp" />
+    <ClCompile Include="..\src\gameLogic\PlayerLogic.cpp" />
+    <ClCompile Include="..\src\gameLogic\UserLogin.cpp" />
+    <ClCompile Include="..\src\GlobalData.cpp" />
     <ClCompile Include="..\src\main.cpp" />
-    <ClCompile Include="..\src\Message.cpp" />
-    <ClCompile Include="..\src\WebsocketClient.cpp" />
+    <ClCompile Include="..\src\network\GameServer.cpp" />
+    <ClCompile Include="..\src\network\WebsocketClient.cpp" />
+    <ClCompile Include="..\src\upgrade\Upgrader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\src\Client.h" />
-    <ClInclude Include="..\src\ConsoleClient.h" />
-    <ClInclude Include="..\src\console\ConsoleLogin.h" />
-    <ClInclude Include="..\src\console\ConsoleProfiler.h" />
-    <ClInclude Include="..\src\database\ActivationCodeQuery.h" />
-    <ClInclude Include="..\src\database\ConsoleLoginQuery.h" />
-    <ClInclude Include="..\src\database\SDKConfigQuery.h" />
-    <ClInclude Include="..\src\database\UIConfigQuery.h" />
-    <ClInclude Include="..\src\gameLogic\ActivationCode.h" />
-    <ClInclude Include="..\src\gameLogic\SDKControl.h" />
-    <ClInclude Include="..\src\gameLogic\UIControl.h" />
-    <ClInclude Include="..\src\GameServer.h" />
-    <ClInclude Include="..\src\Message.h" />
-    <ClInclude Include="..\src\WebsocketClient.h" />
+    <ClInclude Include="..\src\database\PlayerQuery.h" />
+    <ClInclude Include="..\src\DataDefinition.h" />
+    <ClInclude Include="..\src\GameEvent.h" />
+    <ClInclude Include="..\src\gameLogic\PlayerLogic.h" />
+    <ClInclude Include="..\src\gameLogic\UserLogin.h" />
+    <ClInclude Include="..\src\GlobalData.h" />
+    <ClInclude Include="..\src\network\GameServer.h" />
+    <ClInclude Include="..\src\network\Message.h" />
+    <ClInclude Include="..\src\network\WebsocketClient.h" />
+    <ClInclude Include="..\src\upgrade\Upgrader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

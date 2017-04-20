@@ -12,12 +12,12 @@ namespace ws
 
 	}
 
-	void EventDispatcher::addEventListener(int type, EventCallback callback)
+	void EventDispatcher::addEventListener(int type, EventCallback* callback)
 	{
 		listeners[type].insert(callback);
 	}
 
-	void EventDispatcher::removeEventListener(int type, EventCallback callback)
+	void EventDispatcher::removeEventListener(int type, EventCallback* callback)
 	{
 		auto iter = listeners.find(type);
 		if (iter != listeners.end())
@@ -31,10 +31,10 @@ namespace ws
 		auto iter = listeners.find(event.type);
 		if (iter != listeners.end())
 		{
-			std::set<EventCallback>& cbList = iter->second;
-			for (const EventCallback& callback : cbList)
+			std::set<EventCallback*> cbList(iter->second);
+			for (EventCallback* callback : cbList)
 			{
-				callback(event);
+				(*callback)(event);
 			}
 		}
 	}
