@@ -43,4 +43,5 @@ mysql数据库查询队列，支持statement查询方式，缓存已prepare过�
 优化`String`类的一些工具方法，减少对第三方库的依赖
 
 -------
-小弟不才，有BUG和不妥之处欢迎吐槽指点
+此版本作为GameServer-v1封存，发布版在v1.0.0 tag
+GameServer-v2将以asio作为网络库，使用最新的C++20协程来实现
